@@ -1,0 +1,6 @@
+USE kanban;
+CREATE TABLE part_numbers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    part_number VARCHAR(100) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

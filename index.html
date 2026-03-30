@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanban System — Hirschmann Automotive</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+
+/* ── VARIABLES HIRSCHMANN ── */
+:root {
+  --navy:   #0a1f3c;
+  --blue:   #1a4a8a;
+  --red:    #c0272d;
+  --red-dk: #8e1a1e;
+  --silver: #e8ecf0;
+  --white:  #ffffff;
+  --text-muted: #6b7a8d;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  background-color: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── FOND GÉOMÉTRIQUE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(135deg, #0a1f3c 0%, #0d2850 50%, #0a1f3c 100%);
+  z-index: 0;
+}
+
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 60px,
+      rgba(255,255,255,0.018) 60px,
+      rgba(255,255,255,0.018) 61px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 60px,
+      rgba(255,255,255,0.018) 60px,
+      rgba(255,255,255,0.018) 61px
+    );
+  z-index: 0;
+}
+
+/* ── BARRE ROUGE EN HAUT ── */
+.top-bar {
+  position: relative;
+  z-index: 10;
+  height: 5px;
+  background: linear-gradient(90deg, var(--red-dk), var(--red), #e8454b, var(--red));
+}
+
+/* ── HEADER ── */
+header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 50px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(10,31,60,0.6);
+  backdrop-filter: blur(8px);
+}
+
+.header-logo img {
+  height: 48px;
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
+}
+
+.header-meta {
+  text-align: right;
+}
+
+.header-meta .app-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.header-meta .app-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 1px;
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 140px);
+  padding: 60px 30px;
+  text-align: center;
+}
+
+/* ligne décorative rouge */
+.hero-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.1s;
+}
+
+.hero-eyebrow span {
+  display: block;
+  width: 40px;
+  height: 2px;
+  background: var(--red);
+}
+
+.hero-eyebrow p {
+  font-size: 11px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.hero h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 1px;
+  color: var(--white);
+  margin-bottom: 16px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.25s;
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: var(--red);
+}
+
+.hero .subtitle {
+  font-size: 16px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.55);
+  margin-bottom: 60px;
+  letter-spacing: 0.5px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.4s;
+}
+
+/* ── CARTES ── */
+.cards {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+  flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeUp 0.6s ease forwards 0.55s;
+}
+
+.card {
+  position: relative;
+  width: 260px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 40px 32px 36px;
+  cursor: pointer;
+  transition: transform 0.25s ease, border-color 0.25s ease, background 0.25s ease;
+  overflow: hidden;
+  text-align: left;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: var(--red);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.07);
+}
+
+.card:hover::before {
+  transform: scaleX(1);
+}
+
+.card-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  font-size: 24px;
+}
+
+.card-operator .card-icon { background: rgba(26,74,138,0.4); border: 1px solid rgba(26,74,138,0.6); }
+.card-admin    .card-icon { background: rgba(192,39,45,0.25); border: 1px solid rgba(192,39,45,0.5); }
+
+.card-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--white);
+  margin-bottom: 10px;
+}
+
+.card-desc {
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.65;
+  margin-bottom: 32px;
+}
+
+.card-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--white);
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  transition: gap 0.2s ease;
+}
+
+.card:hover .card-btn { gap: 16px; }
+
+.card-btn .arrow {
+  width: 28px;
+  height: 1px;
+  background: var(--red);
+  position: relative;
+  transition: width 0.2s ease;
+}
+
+.card:hover .card-btn .arrow { width: 36px; }
+
+.card-btn .arrow::after {
+  content: '';
+  position: absolute;
+  right: 0; top: -3px;
+  width: 7px; height: 7px;
+  border-right: 1.5px solid var(--red);
+  border-top: 1.5px solid var(--red);
+  transform: rotate(45deg);
+}
+
+/* ── FOOTER ── */
+footer {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 1px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  header { padding: 18px 24px; }
+  .cards { flex-direction: column; align-items: center; }
+  .card  { width: 100%; max-width: 320px; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<header>
+  <div class="header-logo">
+    <img src="images\Hirschmann_Automotive.png" alt="Hirschmann Automotive">
+  </div>
+  <div class="header-meta">
+    <div class="app-label">Système de gestion</div>
+    <div class="app-name">KANBAN SYSTEM</div>
+  </div>
+</header>
+
+<main class="hero">
+
+  <div class="hero-eyebrow">
+    <span></span>
+    <p>Sélection du profil utilisateur</p>
+    <span></span>
+  </div>
+
+  <h1>Bienvenue dans le système<br><em>Kanban</em> Hirschmann</h1>
+  <p class="subtitle">Choisissez votre profil pour accéder à votre espace de travail</p>
+
+  <div class="cards">
+
+    <!-- OPÉRATEUR -->
+    <div class="card card-operator" onclick="goOperator()">
+      <div class="card-icon">🔍</div>
+      <div class="card-title">Opérateur</div>
+      <p class="card-desc">Recherchez et localisez les pièces sur le tableau Kanban par saisie manuelle ou scan QR.</p>
+      <button class="card-btn" onclick="goOperator()">
+        Accéder
+        <span class="arrow"></span>
+      </button>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="card card-admin" onclick="goAdmin()">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title">Administrateur</div>
+      <p class="card-desc">Gérez les références, les emplacements et la configuration du tableau Kanban.</p>
+      <button class="card-btn" onclick="goAdmin()">
+        Accéder
+        <span class="arrow"></span>
+      </button>
+    </div>
+
+  </div>
+</main>
+
+<footer>© 2026 Hirschmann Automotive — Kanban System</footer>
+
+<script>
+function goOperator() { window.location.href = "operator_search.html"; }
+function goAdmin()    { window.location.href = "admin_login.html"; }
+</script>
+
+</body>
+</html>

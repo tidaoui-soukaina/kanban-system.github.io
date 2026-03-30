@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kanban Operator — Hirschmann Automotive</title>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --navy:    #0a1f3c;
+  --navy-md: #0d2850;
+  --blue:    #1a4a8a;
+  --red:     #c0272d;
+  --silver:  #e8ecf0;
+  --white:   #ffffff;
+  --gray:    #6b7a8d;
+  --success: #28ac33;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  background-color: var(--navy);
+  color: var(--white);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* grille de fond */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px),
+    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── BARRE ROUGE ── */
+.top-bar {
+  height: 5px;
+  background: linear-gradient(90deg, var(--red), #e8454b, var(--red));
+  position: relative;
+  z-index: 10;
+}
+
+/* ── HEADER ── */
+header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 50px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(10,31,60,0.7);
+  backdrop-filter: blur(8px);
+}
+
+.header-logo img {
+  height: 44px;
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.header-meta { text-align: right; }
+.header-meta .app-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+  font-weight: 600;
+}
+.header-meta .app-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 1px;
+}
+
+.btn-logout {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 8px 18px;
+  border-radius: 3px;
+  border: 1px solid rgba(192,39,45,0.5);
+  background: rgba(192,39,45,0.15);
+  color: #e8454b;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-logout:hover { background: rgba(192,39,45,0.3); border-color: var(--red); }
+
+/* ── MAIN ── */
+main {
+  position: relative;
+  z-index: 10;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 30px 60px;
+}
+
+/* ── EYEBROW ── */
+.section-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.section-eyebrow span {
+  display: block;
+  width: 30px;
+  height: 2px;
+  background: var(--red);
+}
+.section-eyebrow p {
+  font-size: 10px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.page-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--white);
+  margin-bottom: 4px;
+}
+
+.welcome-text {
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 36px;
+}
+
+/* ── BARRE DE RECHERCHE ── */
+.search-panel {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 4px;
+  padding: 24px 28px;
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.search-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  white-space: nowrap;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 11px 16px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 3px;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.search-input::placeholder { color: rgba(255,255,255,0.25); }
+.search-input:focus { border-color: rgba(26,74,138,0.8); }
+
+.btn-search {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 11px 24px;
+  border-radius: 3px;
+  border: none;
+  background: var(--blue);
+  color: var(--white);
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+.btn-search:hover { background: #1f5ba8; }
+
+.btn-scan-qr {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 11px 20px;
+  border-radius: 3px;
+  border: 1px solid rgba(142,68,173,0.5);
+  background: rgba(142,68,173,0.2);
+  color: #c39bd3;
+  cursor: pointer;
+  transition: 0.2s;
+  white-space: nowrap;
+}
+.btn-scan-qr:hover { background: rgba(142,68,173,0.35); }
+
+/* ── SCANNER ── */
+#scan-wrapper {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding: 24px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(142,68,173,0.3);
+  border-radius: 4px;
+}
+
+#scan-video {
+  width: 280px;
+  height: 280px;
+  border-radius: 6px;
+  border: 2px solid rgba(142,68,173,0.6);
+  object-fit: cover;
+  background: #000;
+  display: block;
+}
+
+#scan-canvas { display: none; }
+
+#scan-status {
+  font-size: 13px;
+  color: #27ae60;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.btn-stop {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 9px 20px;
+  border-radius: 3px;
+  border: 1px solid rgba(192,39,45,0.5);
+  background: rgba(192,39,45,0.15);
+  color: #e8454b;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-stop:hover { background: rgba(192,39,45,0.3); }
+
+/* ── KANBAN GRID ── */
+.kanban-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.kanban-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+}
+
+.kanban-count {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.25);
+}
+
+#kanban {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.box {
+  aspect-ratio: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: center;
+  padding: 8px;
+  color: rgba(255,255,255,0.7);
+  transition: background 0.3s, border-color 0.3s, color 0.3s;
+  letter-spacing: 0.3px;
+}
+
+.highlight {
+  background: rgba(40,172,51,0.2) !important;
+  border-color: rgba(40,172,51,0.6) !important;
+  color: #5dde6a !important;
+  box-shadow: 0 0 0 1px rgba(40,172,51,0.3);
+}
+
+/* ── FOOTER BUTTONS ── */
+.footer-nav {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.btn-nav {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 22px;
+  border-radius: 3px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-nav:hover {
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.8);
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<header>
+  <div class="header-logo">
+    <img src="images\Hirschmann_Automotive.png" alt="Hirschmann Automotive">
+  </div>
+  <div class="header-right">
+    <div class="header-meta">
+      <div class="app-label">Espace Opérateur</div>
+      <div class="app-name">KANBAN SYSTEM</div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <div class="section-eyebrow">
+    <span></span>
+    <p>Recherche de références</p>
+  </div>
+  <h1 class="page-title">Localisation Part Number</h1>
+  <p class="welcome-text" id="welcome"></p>
+
+  <!-- BARRE RECHERCHE -->
+  <div class="search-panel">
+    <span class="search-label">Part Number</span>
+    <input type="text" id="partnumber" class="search-input" placeholder="Ex: 812-400-001">
+    <button class="btn-search" onclick="searchPart()">Valider</button>
+    <button class="btn-scan-qr" onclick="startScan()">📷 Scanner QR</button>
+  </div>
+
+  <!-- ZONE CAMÉRA -->
+  <div id="scan-wrapper">
+    <p id="scan-status">Démarrage caméra...</p>
+    <video id="scan-video" autoplay playsinline muted></video>
+    <canvas id="scan-canvas"></canvas>
+    <button class="btn-stop" onclick="stopScan()">Arrêter le scan</button>
+  </div>
+
+  <!-- KANBAN -->
+  <div class="kanban-header">
+    <span class="kanban-title">Tableau des emplacements</span>
+    <span class="kanban-count" id="kanban-count"></span>
+  </div>
+
+  <div id="kanban"></div>
+
+  <!-- NAVIGATION -->
+  <div class="footer-nav">
+    <button class="btn-nav" onclick="goBack()">← Page précédente</button>
+    <button class="btn-nav" onclick="goHome()">Page initiale</button>
+  </div>
+
+</main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const username = 'cher opérateur';
+  document.getElementById("welcome").innerText = `Bienvenue, ${username}`;
+
+  let partsDB = [];
+  let operatorHistory = JSON.parse(localStorage.getItem("operatorHistory") || "[]");
+  let videoStream   = null;
+  let animFrameId   = null;
+  let scannerActive = false;
+
+  const videoEl     = document.getElementById("scan-video");
+  const canvasEl    = document.getElementById("scan-canvas");
+  const ctx2d       = canvasEl.getContext("2d");
+  const scanWrapper = document.getElementById("scan-wrapper");
+  const scanStatus  = document.getElementById("scan-status");
+
+  // ── KANBAN ────────────────────────────────────────
+  function renderKanban() {
+    const highlighted = new Set(
+      Array.from(document.querySelectorAll('.box.highlight')).map(b => b.dataset.part)
+    );
+
+    const kanban = document.getElementById("kanban");
+    kanban.innerHTML = "";
+
+    const sorted = [...partsDB].sort((a, b) =>
+      (a.emplacement || "").localeCompare(b.emplacement || "")
+    );
+
+    sorted.forEach(part => {
+      const div = document.createElement("div");
+      div.className = "box";
+      div.dataset.part = part.part_number;
+      div.innerText = part.part_number;
+      if (highlighted.has(part.part_number)) div.classList.add('highlight');
+      kanban.appendChild(div);
+    });
+
+    document.getElementById("kanban-count").innerText = sorted.length + " références";
+  }
+
+  // ── BACKEND ───────────────────────────────────────
+  async function loadPartsFromBackend() {
+    try {
+      const res = await fetch("http://localhost:3000/getParts");
+      partsDB   = await res.json();
+      renderKanban();
+    } catch (e) { console.error("Backend indispo:", e); }
+  }
+
+  // ── HIGHLIGHT ─────────────────────────────────────
+  function clearHighlight() {
+    document.querySelectorAll('.box').forEach(b => b.classList.remove('highlight'));
+  }
+
+  // ── RECHERCHE ─────────────────────────────────────
+  function searchPart(partValue) {
+    const raw = partValue || document.getElementById("partnumber").value.trim();
+    if (!raw) { alert("Entrez un Part Number"); return; }
+    if (partValue) document.getElementById("partnumber").value = partValue;
+
+    const needle = raw.replace(/\D/g, "");
+    document.querySelectorAll('.box').forEach(b => b.classList.remove('highlight'));
+
+    const hits = Array.from(document.querySelectorAll('.box')).filter(b =>
+      b.dataset.part.replace(/\D/g, "").includes(needle)
+    );
+
+    if (hits.length > 0) {
+      hits.forEach(b => b.classList.add('highlight'));
+      hits[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      operatorHistory.push({ user: username, part: raw, action: "searched", timestamp: new Date().toLocaleString() });
+      localStorage.setItem("operatorHistory", JSON.stringify(operatorHistory));
+    } else {
+      alert("Part Number introuvable !");
+    }
+  }
+
+  // ── SCANNER ───────────────────────────────────────
+  async function startScan() {
+    if (scannerActive) return;
+    scanWrapper.style.display = "flex";
+    scanStatus.innerText = "Démarrage caméra...";
+
+    try {
+      videoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } }
+      });
+    } catch (err) {
+      scanStatus.innerText = "❌ " + err.message;
+      return;
+    }
+
+    videoEl.srcObject = videoStream;
+    scannerActive = true;
+
+    videoEl.addEventListener("loadedmetadata", function onMeta() {
+      videoEl.removeEventListener("loadedmetadata", onMeta);
+      videoEl.play().then(() => {
+        scanStatus.innerText = "Pointez vers un QR Code...";
+        animFrameId = requestAnimationFrame(scanFrame);
+      }).catch(e => { scanStatus.innerText = "❌ " + e.message; });
+    });
+  }
+
+  function scanFrame() {
+    if (!scannerActive) return;
+    if (videoEl.readyState >= 2 && videoEl.videoWidth > 0) {
+      canvasEl.width  = videoEl.videoWidth;
+      canvasEl.height = videoEl.videoHeight;
+      ctx2d.drawImage(videoEl, 0, 0);
+      const img  = ctx2d.getImageData(0, 0, canvasEl.width, canvasEl.height);
+      const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
+      if (code && code.data) {
+        scanStatus.innerText = "✅ Scanné : " + code.data;
+        stopScan();
+        searchPart(code.data);
+        return;
+      }
+    }
+    animFrameId = requestAnimationFrame(scanFrame);
+  }
+
+  function stopScan() {
+    scannerActive = false;
+    if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
+    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
+    videoEl.srcObject = null;
+    scanWrapper.style.display = "none";
+    scanStatus.innerText = "";
+  }
+
+  // ── NAVIGATION ────────────────────────────────────
+  function goBack() { window.history.back(); }
+  function goHome() { window.location.href = "index.html"; }
+
+  // ── EXPOSER ───────────────────────────────────────
+  window.searchPart    = searchPart;
+  window.clearHighlight= clearHighlight;
+  window.startScan     = startScan;
+  window.stopScan      = stopScan;
+  window.goBack        = goBack;
+  window.goHome        = goHome;
+
+  // ── INIT ──────────────────────────────────────────
+  document.getElementById("partnumber").addEventListener("keydown", e => { if (e.key === "Enter") searchPart(); });
+  document.getElementById("partnumber").addEventListener("input", clearHighlight);
+
+  loadPartsFromBackend();
+  setInterval(loadPartsFromBackend, 5000);
+});
+</script>
+</body>
+</html>

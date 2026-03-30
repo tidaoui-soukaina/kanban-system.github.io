@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion Admin — Hirschmann Automotive</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --navy:    #0a1f3c;
+  --navy-md: #0d2850;
+  --blue:    #1a4a8a;
+  --red:     #c0272d;
+  --red-lt:  #e8454b;
+  --white:   #ffffff;
+  --gray:    #6b7a8d;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Barlow', sans-serif;
+  background-color: var(--navy);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* grille de fond */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px),
+    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── BARRE ROUGE ── */
+.top-bar {
+  height: 5px;
+  background: linear-gradient(90deg, var(--red), var(--red-lt), var(--red));
+  position: relative;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+/* ── HEADER ── */
+header {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 50px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(10,31,60,0.7);
+  backdrop-filter: blur(8px);
+  flex-shrink: 0;
+}
+
+.header-logo img {
+  height: 44px;
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
+}
+
+.header-meta { text-align: right; }
+.header-meta .app-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+  font-weight: 600;
+}
+.header-meta .app-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 1px;
+}
+
+/* ── CENTRE ── */
+.center-wrap {
+  flex: 1;
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+/* ── CARD LOGIN ── */
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 4px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeUp 0.5s ease forwards 0.15s;
+}
+
+@keyframes fadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* bande rouge en haut de la card */
+.card-accent {
+  height: 3px;
+  background: linear-gradient(90deg, var(--red), var(--red-lt));
+}
+
+.card-body {
+  padding: 40px 44px 44px;
+}
+
+/* eyebrow */
+.card-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.card-eyebrow span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--red);
+}
+.card-eyebrow p {
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.card-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.5px;
+  margin-bottom: 36px;
+}
+
+/* champs */
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 8px;
+}
+
+.field input {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 15px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 3px;
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.field input::placeholder { color: rgba(255,255,255,0.2); }
+.field input:focus { border-color: rgba(26,74,138,0.8); }
+
+/* message erreur */
+#error-msg {
+  display: none;
+  font-size: 13px;
+  color: var(--red-lt);
+  margin-bottom: 18px;
+  padding: 10px 14px;
+  background: rgba(192,39,45,0.12);
+  border: 1px solid rgba(192,39,45,0.3);
+  border-radius: 3px;
+  letter-spacing: 0.3px;
+}
+
+/* bouton valider */
+.btn-login {
+  width: 100%;
+  padding: 13px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: var(--blue);
+  color: var(--white);
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 28px;
+}
+.btn-login:hover { background: #1f5ba8; }
+
+/* séparateur */
+.divider {
+  height: 1px;
+  background: rgba(255,255,255,0.06);
+  margin-bottom: 20px;
+}
+
+/* boutons navigation */
+.nav-btns {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-nav {
+  flex: 1;
+  padding: 10px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.4);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-nav:hover {
+  background: rgba(255,255,255,0.07);
+  color: rgba(255,255,255,0.7);
+}
+
+/* ── FOOTER ── */
+footer {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  padding: 16px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 1px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<header>
+  <div class="header-logo">
+    <img src="images\Hirschmann_Automotive.png" alt="Hirschmann Automotive">
+  </div>
+  <div class="header-meta">
+    <div class="app-label">Accès sécurisé</div>
+    <div class="app-name">KANBAN SYSTEM</div>
+  </div>
+</header>
+
+<div class="center-wrap">
+  <div class="login-card">
+    <div class="card-accent"></div>
+    <div class="card-body">
+
+      <div class="card-eyebrow">
+        <span></span>
+        <p>Administration</p>
+      </div>
+      <h1 class="card-title">Connexion Admin</h1>
+
+      <div class="field">
+        <label>Nom d'utilisateur</label>
+        <input type="text" id="username" placeholder="Entrez votre identifiant"
+               onkeydown="if(event.key==='Enter') document.getElementById('passcode').focus()">
+      </div>
+
+      <div class="field">
+        <label>Passcode</label>
+        <input type="password" id="passcode" placeholder="••••"
+               onkeydown="if(event.key==='Enter') loginAdmin()">
+      </div>
+
+      <div id="error-msg">Identifiant ou passcode incorrect.</div>
+
+      <button class="btn-login" onclick="loginAdmin()">Valider</button>
+
+      <div class="divider"></div>
+
+      <div class="nav-btns">
+        <button class="btn-nav" onclick="goBack()">← Précédent</button>
+        <button class="btn-nav" onclick="goHome()">Page initiale</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer>© 2026 Hirschmann Automotive — Kanban System</footer>
+
+<script>
+const adminsDB = [
+  { username: "Stidaoui", passcode: "1357" },
+  { username: "admin1",   passcode: "1234" },
+  { username: "admin2",   passcode: "0000" }
+];
+
+function loginAdmin() {
+  const username = document.getElementById('username').value.trim();
+  const passcode = document.getElementById('passcode').value.trim();
+  const errorEl  = document.getElementById('error-msg');
+
+  const admin = adminsDB.find(a => a.username === username && a.passcode === passcode);
+
+  if (admin) {
+    errorEl.style.display = 'none';
+    localStorage.setItem("adminUser", admin.username);
+    window.location.href = "admin_panel.html";
+  } else {
+    errorEl.style.display = 'block';
+    document.getElementById('passcode').value = '';
+    document.getElementById('passcode').focus();
+  }
+}
+
+function goBack() { window.history.back(); }
+function goHome() { window.location.href = "index.html"; }
+</script>
+
+</body>
+</html>
