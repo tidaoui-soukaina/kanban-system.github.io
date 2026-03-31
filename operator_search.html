@@ -5,371 +5,618 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kanban Operator — Hirschmann Automotive</title>
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
 :root {
-  --navy:    #0a1f3c;
-  --navy-md: #0d2850;
-  --blue:    #1a4a8a;
+  --navy:    #08192e;
+  --navy-md: #0c2240;
+  --navy-lt: #112c50;
+  --blue:    #1b50a0;
+  --blue-lt: #2a6fcc;
   --red:     #c0272d;
-  --silver:  #e8ecf0;
+  --red-lt:  #e8454b;
+  --red-dk:  #8e1a1e;
+  --red-dim: rgba(192,39,45,0.15);
+  --purple:  #7c3aed;
+  --purple-lt:#a78bfa;
+  --purple-dim:rgba(124,58,237,0.15);
   --white:   #ffffff;
-  --gray:    #6b7a8d;
-  --success: #28ac33;
+  --off:     rgba(255,255,255,0.5);
+  --faint:   rgba(255,255,255,0.05);
+  --border:  rgba(255,255,255,0.09);
+  --success: #22c55e;
+  --success-dim: rgba(34,197,94,0.15);
+  --mono:    'DM Mono', monospace;
+  --sans:    'Barlow', sans-serif;
+  --cond:    'Barlow Condensed', sans-serif;
+  --radius:  6px;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Barlow', sans-serif;
-  background-color: var(--navy);
+  font-family: var(--sans);
+  background: var(--navy);
   color: var(--white);
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   overflow-x: hidden;
 }
 
-/* grille de fond */
+/* ─── SCANLINES ─── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.035) 2px, rgba(0,0,0,0.035) 4px);
+  pointer-events: none; z-index: 1;
+}
+
+/* ─── GRID ─── */
 body::after {
   content: '';
-  position: fixed;
-  inset: 0;
+  position: fixed; inset: 0;
   background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px),
-    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px);
-  pointer-events: none;
-  z-index: 0;
+    repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255,255,255,0.022) 59px, rgba(255,255,255,0.022) 60px),
+    repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255,255,255,0.022) 59px, rgba(255,255,255,0.022) 60px);
+  pointer-events: none; z-index: 0;
 }
 
-/* ── BARRE ROUGE ── */
+/* ─── GLOWS ─── */
+.glow {
+  position: fixed; border-radius: 50%;
+  filter: blur(110px); pointer-events: none; z-index: 0;
+}
+.glow-blue {
+  width: 600px; height: 600px; top: -200px; left: -150px;
+  background: radial-gradient(circle, rgba(27,80,160,0.13), transparent 70%);
+  animation: drift 14s ease-in-out infinite alternate;
+}
+.glow-red {
+  width: 450px; height: 450px; bottom: -150px; right: -100px;
+  background: radial-gradient(circle, rgba(192,39,45,0.09), transparent 70%);
+  animation: drift 10s ease-in-out infinite alternate-reverse;
+}
+@keyframes drift {
+  from { transform: translate(0,0) scale(1); }
+  to   { transform: translate(25px,15px) scale(1.1); }
+}
+
+/* ─── TOP BAR ─── */
 .top-bar {
-  height: 5px;
-  background: linear-gradient(90deg, var(--red), #e8454b, var(--red));
-  position: relative;
-  z-index: 10;
+  height: 4px;
+  background: linear-gradient(90deg, var(--red-dk), var(--red), var(--red-lt), var(--red), var(--red-dk));
+  background-size: 300% 100%;
+  animation: bar-ride 4s linear infinite;
+  position: relative; z-index: 100; flex-shrink: 0;
+}
+@keyframes bar-ride {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 300% 0%; }
 }
 
-/* ── HEADER ── */
+/* ─── HEADER ─── */
 header {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 50px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  background: rgba(10,31,60,0.7);
-  backdrop-filter: blur(8px);
+  position: relative; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 48px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,25,46,0.85);
+  backdrop-filter: blur(14px);
+  flex-shrink: 0; gap: 16px;
 }
 
 .header-logo img {
-  height: 44px;
+  height: 38px;
   filter: brightness(0) invert(1);
-  opacity: 0.92;
+  opacity: 0.9; display: block;
+}
+.logo-fallback {
+  display: none;
+  font-family: var(--cond); font-size: 18px; font-weight: 800;
+  letter-spacing: 2px; color: var(--white);
 }
 
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 24px;
+.header-center { flex: 1; text-align: center; }
+.app-label {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--blue-lt); opacity: 0.9;
+}
+.app-name {
+  font-family: var(--cond); font-size: 21px; font-weight: 800;
+  color: var(--white); letter-spacing: 2px; line-height: 1.1;
 }
 
-.header-meta { text-align: right; }
-.header-meta .app-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--red);
-  font-weight: 600;
+.header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: blink 2s ease-in-out infinite;
 }
-.header-meta .app-name {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--white);
-  letter-spacing: 1px;
+@keyframes blink {
+  0%,100% { opacity: 1; box-shadow: 0 0 6px var(--success); }
+  50%      { opacity: 0.4; box-shadow: 0 0 2px var(--success); }
 }
 
-.btn-logout {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 8px 18px;
-  border-radius: 3px;
-  border: 1px solid rgba(192,39,45,0.5);
-  background: rgba(192,39,45,0.15);
-  color: #e8454b;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.btn-logout:hover { background: rgba(192,39,45,0.3); border-color: var(--red); }
-
-/* ── MAIN ── */
+/* ─── MAIN ─── */
 main {
-  position: relative;
-  z-index: 10;
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 40px 30px 60px;
+  position: relative; z-index: 10;
+  max-width: 1200px; margin: 0 auto;
+  width: 100%; padding: 36px 40px 60px; flex: 1;
 }
 
-/* ── EYEBROW ── */
+/* ─── EYEBROW ─── */
 .section-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 12px; margin-bottom: 8px;
 }
-.section-eyebrow span {
-  display: block;
-  width: 30px;
-  height: 2px;
-  background: var(--red);
-}
+.section-eyebrow span { display: block; width: 28px; height: 2px; background: var(--blue-lt); }
 .section-eyebrow p {
-  font-size: 10px;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: var(--red);
-  font-weight: 600;
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 4px; text-transform: uppercase;
+  color: var(--blue-lt);
 }
 
 .page-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--white);
-  margin-bottom: 4px;
+  font-family: var(--cond); font-size: 30px; font-weight: 800;
+  color: var(--white); margin-bottom: 4px; letter-spacing: 0.5px;
 }
 
 .welcome-text {
-  font-size: 14px;
-  font-weight: 300;
-  color: rgba(255,255,255,0.4);
-  margin-bottom: 36px;
+  font-family: var(--mono); font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  margin-bottom: 28px;
+  letter-spacing: 0.5px;
 }
+.welcome-text span { color: rgba(255,255,255,0.55); }
 
-/* ── BARRE DE RECHERCHE ── */
+/* ─── SEARCH PANEL ─── */
 .search-panel {
+  display: flex; align-items: center;
+  gap: 12px; flex-wrap: wrap;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 4px;
-  padding: 24px 28px;
-  margin-bottom: 30px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 22px;
+  margin-bottom: 16px;
+  transition: border-color 0.25s;
+  position: relative; overflow: hidden;
+}
+.search-panel:focus-within {
+  border-color: rgba(27,80,160,0.5);
+  background: rgba(27,80,160,0.03);
 }
 
 .search-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.4);
-  white-space: nowrap;
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(255,255,255,0.28); white-space: nowrap;
 }
 
 .search-input {
-  flex: 1;
-  min-width: 200px;
+  flex: 1; min-width: 180px;
   padding: 11px 16px;
-  font-family: 'Barlow', sans-serif;
-  font-size: 15px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 3px;
-  color: var(--white);
-  outline: none;
-  transition: border-color 0.2s;
+  font-family: var(--mono); font-size: 14px; letter-spacing: 1px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius);
+  color: var(--white); outline: none;
+  transition: border-color 0.2s, background 0.2s;
 }
-.search-input::placeholder { color: rgba(255,255,255,0.25); }
-.search-input:focus { border-color: rgba(26,74,138,0.8); }
+.search-input::placeholder { color: rgba(255,255,255,0.2); }
+.search-input:focus {
+  border-color: rgba(27,80,160,0.6);
+  background: rgba(27,80,160,0.04);
+}
 
 .btn-search {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 11px 24px;
-  border-radius: 3px;
-  border: none;
-  background: var(--blue);
-  color: var(--white);
-  cursor: pointer;
-  transition: 0.2s;
-  white-space: nowrap;
+  font-family: var(--cond); font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 11px 26px; border-radius: var(--radius); border: none;
+  background: var(--blue); color: var(--white);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  position: relative; overflow: hidden;
 }
-.btn-search:hover { background: #1f5ba8; }
+.btn-search::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--blue-lt);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform 0.25s; z-index: 0;
+}
+.btn-search:hover::before { transform: scaleX(1); }
+.btn-search span { position: relative; z-index: 1; }
+.btn-search:active { transform: scale(0.97); }
 
 .btn-scan-qr {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 11px 20px;
-  border-radius: 3px;
-  border: 1px solid rgba(142,68,173,0.5);
-  background: rgba(142,68,173,0.2);
-  color: #c39bd3;
-  cursor: pointer;
-  transition: 0.2s;
-  white-space: nowrap;
+  font-family: var(--cond); font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 11px 20px; border-radius: var(--radius);
+  border: 1px solid rgba(124,58,237,0.4);
+  background: var(--purple-dim);
+  color: var(--purple-lt);
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
 }
-.btn-scan-qr:hover { background: rgba(142,68,173,0.35); }
+.btn-scan-qr:hover {
+  background: rgba(124,58,237,0.3);
+  border-color: var(--purple);
+  transform: translateY(-1px);
+}
+.btn-scan-qr.active {
+  background: rgba(124,58,237,0.35);
+  border-color: var(--purple-lt);
+  animation: pulse-purple 1.5s ease-in-out infinite;
+}
+@keyframes pulse-purple {
+  0%,100% { box-shadow: 0 0 0 0 rgba(124,58,237,0.3); }
+  50%      { box-shadow: 0 0 0 6px rgba(124,58,237,0); }
+}
 
-/* ── SCANNER ── */
-#scan-wrapper {
+/* ─── RESULT BANNER ─── */
+#result-banner {
   display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding: 24px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(142,68,173,0.3);
-  border-radius: 4px;
+  align-items: center; gap: 12px;
+  padding: 14px 20px; border-radius: var(--radius);
+  margin-bottom: 16px; animation: slide-in 0.3s ease;
+}
+#result-banner.found {
+  background: rgba(34,197,94,0.1);
+  border: 1px solid rgba(34,197,94,0.3);
+}
+#result-banner.notfound {
+  background: rgba(192,39,45,0.1);
+  border: 1px solid rgba(192,39,45,0.3);
+}
+.banner-icon { font-size: 20px; }
+.banner-text {
+  font-family: var(--mono); font-size: 13px; letter-spacing: 0.5px;
+}
+.banner-text strong { color: var(--white); }
+.result-banner.found .banner-text { color: var(--success); }
+.result-banner.notfound .banner-text { color: var(--red-lt); }
+@keyframes slide-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── SCANNER ─── */
+#scan-wrapper {
+  display: none; flex-direction: column;
+  align-items: center; gap: 14px;
+  margin-bottom: 20px; padding: 24px;
+  background: rgba(124,58,237,0.06);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: var(--radius);
+  animation: card-in 0.3s ease;
+}
+
+.scanner-top {
+  width: 100%; display: flex;
+  align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+}
+
+.scanner-title {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: var(--purple-lt);
+}
+
+#scan-status {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--success); letter-spacing: 0.5px;
+}
+
+/* Scanner viewfinder */
+.scanner-frame {
+  position: relative;
+  width: 260px; height: 260px;
+}
+.scanner-corner {
+  position: absolute;
+  width: 20px; height: 20px;
+  border-color: var(--purple-lt);
+  border-style: solid;
+}
+.scanner-corner.tl { top: -2px; left: -2px; border-width: 2px 0 0 2px; }
+.scanner-corner.tr { top: -2px; right: -2px; border-width: 2px 2px 0 0; }
+.scanner-corner.bl { bottom: -2px; left: -2px; border-width: 0 0 2px 2px; }
+.scanner-corner.br { bottom: -2px; right: -2px; border-width: 0 2px 2px 0; }
+
+.scanner-line {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--purple-lt), transparent);
+  animation: scan-sweep 2s ease-in-out infinite;
+}
+@keyframes scan-sweep {
+  0%   { top: 0;    opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 
 #scan-video {
-  width: 280px;
-  height: 280px;
-  border-radius: 6px;
-  border: 2px solid rgba(142,68,173,0.6);
-  object-fit: cover;
-  background: #000;
-  display: block;
+  width: 260px; height: 260px;
+  border-radius: 4px; object-fit: cover;
+  background: #000; display: block;
 }
-
 #scan-canvas { display: none; }
 
-#scan-status {
-  font-size: 13px;
-  color: #27ae60;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
 .btn-stop {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 9px 20px;
-  border-radius: 3px;
-  border: 1px solid rgba(192,39,45,0.5);
-  background: rgba(192,39,45,0.15);
-  color: #e8454b;
-  cursor: pointer;
-  transition: 0.2s;
+  font-family: var(--cond); font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 9px 20px; border-radius: var(--radius);
+  border: 1px solid rgba(192,39,45,0.4);
+  background: var(--red-dim); color: var(--red-lt);
+  cursor: pointer; transition: all 0.2s;
 }
-.btn-stop:hover { background: rgba(192,39,45,0.3); }
+.btn-stop:hover { background: rgba(192,39,45,0.3); border-color: var(--red); }
 
-/* ── KANBAN GRID ── */
-.kanban-header {
-  display: flex;
-  align-items: center;
+/* ─── TOOLBAR ─── */
+.toolbar {
+  display: flex; align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
 }
-
+.toolbar-left { display: flex; align-items: center; gap: 10px; }
 .kanban-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.35);
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 3px; text-transform: uppercase;
+  color: rgba(255,255,255,0.28);
 }
-
 .kanban-count {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: rgba(255,255,255,0.25);
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 1px;
+  color: rgba(255,255,255,0.2);
+  background: var(--faint);
+  border: 1px solid var(--border);
+  border-radius: 3px; padding: 2px 10px;
 }
 
+.toolbar-right { display: flex; align-items: center; gap: 8px; }
+
+.filter-input {
+  padding: 7px 14px;
+  font-family: var(--mono); font-size: 12px;
+  background: var(--faint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--white); outline: none;
+  width: 180px; transition: border-color 0.2s, width 0.3s;
+}
+.filter-input::placeholder { color: rgba(255,255,255,0.2); }
+.filter-input:focus { border-color: rgba(27,80,160,0.5); width: 220px; }
+
+.btn-clear {
+  font-family: var(--cond); font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 7px 14px; border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--faint); color: rgba(255,255,255,0.35);
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-clear:hover { background: rgba(255,255,255,0.08); color: var(--white); }
+
+/* ─── KANBAN GRID ─── */
 #kanban {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
 }
 
+/* ─── BOX ─── */
 .box {
-  aspect-ratio: 1;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 4px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 600;
-  font-size: 13px;
-  text-align: center;
-  padding: 8px;
-  color: rgba(255,255,255,0.7);
-  transition: background 0.3s, border-color 0.3s, color 0.3s;
-  letter-spacing: 0.3px;
+  background: rgba(12,34,64,0.7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 16px 10px;
+  min-height: 80px;
+  cursor: pointer; transition: all 0.2s;
+  position: relative; overflow: hidden;
+  animation: card-in 0.3s ease both;
+}
+.box::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px; background: var(--blue);
+  transition: background 0.2s;
+}
+.box:hover { border-color: rgba(255,255,255,0.18); background: rgba(17,44,80,0.85); }
+.box:hover::before { background: var(--blue-lt); }
+
+.box-pn {
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: rgba(255,255,255,0.75); text-align: center;
+  word-break: break-all; letter-spacing: 0.3px;
+  margin-bottom: 4px;
+}
+.box-place {
+  font-family: var(--mono); font-size: 9px;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: rgba(255,255,255,0.22);
 }
 
-.highlight {
-  background: rgba(40,172,51,0.2) !important;
-  border-color: rgba(40,172,51,0.6) !important;
-  color: #5dde6a !important;
-  box-shadow: 0 0 0 1px rgba(40,172,51,0.3);
+/* HIGHLIGHT */
+.box.highlight {
+  background: rgba(34,197,94,0.12) !important;
+  border-color: rgba(34,197,94,0.5) !important;
+  box-shadow: 0 0 0 1px rgba(34,197,94,0.2), 0 0 20px rgba(34,197,94,0.1);
+  animation: highlight-pulse 2s ease-in-out infinite !important;
+}
+.box.highlight::before { background: var(--success) !important; }
+.box.highlight .box-pn { color: #6ee7a0 !important; }
+
+@keyframes highlight-pulse {
+  0%,100% { box-shadow: 0 0 0 1px rgba(34,197,94,0.2), 0 0 20px rgba(34,197,94,0.1); }
+  50%      { box-shadow: 0 0 0 2px rgba(34,197,94,0.35), 0 0 35px rgba(34,197,94,0.18); }
 }
 
-/* ── FOOTER BUTTONS ── */
+/* DIMMED (others when something is highlighted) */
+.box.dimmed {
+  opacity: 0.35;
+  filter: saturate(0.3);
+}
+
+/* SKELETON */
+.skeleton-box {
+  height: 80px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+  background-size: 200% 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes card-in { from { opacity:0; transform:scale(0.97) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+
+/* ─── HISTORY PANEL ─── */
+.history-panel {
+  margin-top: 32px;
+  background: var(--faint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.history-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer; user-select: none;
+}
+.history-title {
+  font-family: var(--mono); font-size: 10px;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+.history-toggle {
+  font-size: 12px; color: rgba(255,255,255,0.25);
+  transition: transform 0.2s;
+}
+.history-toggle.open { transform: rotate(180deg); }
+.history-body { display: none; padding: 12px 18px; }
+.history-body.open { display: block; }
+.history-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  font-family: var(--mono); font-size: 11px;
+}
+.history-item:last-child { border-bottom: none; }
+.history-pn { color: rgba(255,255,255,0.7); font-weight: 500; flex: 1; }
+.history-time { color: rgba(255,255,255,0.22); font-size: 10px; }
+.history-empty { color: rgba(255,255,255,0.2); font-size: 12px; text-align: center; padding: 8px 0; }
+
+/* ─── FOOTER NAV ─── */
 .footer-nav {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 40px;
-  padding-top: 24px;
+  display: flex; justify-content: center; gap: 10px;
+  margin-top: 44px; padding-top: 24px;
   border-top: 1px solid rgba(255,255,255,0.06);
+  flex-wrap: wrap;
+}
+.btn-nav {
+  font-family: var(--cond); font-size: 11px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 10px 22px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--faint);
+  color: rgba(255,255,255,0.4); cursor: pointer; transition: all 0.2s;
+}
+.btn-nav:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.2); }
+
+/* ─── FOOTER ─── */
+footer {
+  position: relative; z-index: 10; text-align: center;
+  padding: 14px; font-family: var(--mono); font-size: 10px;
+  color: rgba(255,255,255,0.1); letter-spacing: 1px;
+  border-top: 1px solid rgba(255,255,255,0.05); flex-shrink: 0;
 }
 
-.btn-nav {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  padding: 10px 22px;
-  border-radius: 3px;
-  border: 1px solid rgba(255,255,255,0.12);
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.5);
-  cursor: pointer;
-  transition: 0.2s;
+/* ─── TOAST ─── */
+#toast-container {
+  position: fixed; bottom: 24px; right: 24px;
+  z-index: 1000; display: flex; flex-direction: column;
+  gap: 8px; pointer-events: none;
 }
-.btn-nav:hover {
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.8);
+.toast {
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.5px;
+  padding: 12px 18px; border-radius: var(--radius); border: 1px solid;
+  backdrop-filter: blur(10px);
+  animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
+  pointer-events: none; max-width: 300px;
+}
+.toast.success { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.3); color: var(--success); }
+.toast.error   { background: rgba(192,39,45,0.15);  border-color: rgba(192,39,45,0.3); color: var(--red-lt); }
+.toast.info    { background: rgba(27,80,160,0.15);   border-color: rgba(27,80,160,0.3); color: #7ab3f5; }
+@keyframes toast-in  { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+@keyframes toast-out { from { opacity:1; } to { opacity:0; } }
+
+/* ═══════════════════════════════
+   📱 MOBILE ≤ 768px
+═══════════════════════════════ */
+@media (max-width: 768px) {
+  header { padding: 12px 16px; flex-wrap: nowrap; }
+  .header-logo img { height: 28px; }
+  .app-name { font-size: 15px; }
+  .app-label { font-size: 8px; }
+  .status-dot { display: none; }
+
+  main { padding: 20px 16px 40px; }
+
+  .search-panel { padding: 14px 16px; gap: 10px; }
+  .search-label { display: none; }
+  .search-input { min-width: 0; font-size: 13px; }
+  .btn-search, .btn-scan-qr { padding: 11px 16px; font-size: 11px; }
+
+  #scan-wrapper { padding: 16px; }
+  .scanner-frame, #scan-video { width: 220px; height: 220px; }
+
+  .toolbar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .toolbar-right { justify-content: space-between; }
+  .filter-input { width: 100%; flex: 1; }
+  .filter-input:focus { width: 100%; }
+
+  #kanban { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .box { min-height: 70px; padding: 12px 8px; }
+  .box-pn { font-size: 11px; }
+
+  .footer-nav { gap: 8px; }
+  .btn-nav { padding: 9px 14px; font-size: 10px; }
+
+  #toast-container { bottom: 16px; right: 12px; left: 12px; }
+  .toast { max-width: 100%; }
+}
+
+@media (max-width: 400px) {
+  #kanban { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 </head>
 <body>
 
+<div class="glow glow-blue"></div>
+<div class="glow glow-red"></div>
+
 <div class="top-bar"></div>
 
 <header>
   <div class="header-logo">
-    <img src="images\Hirschmann_Automotive.png" alt="Hirschmann Automotive">
+    <img src="images/Hirschmann_Automotive.png" alt="Hirschmann Automotive"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+    <span class="logo-fallback" style="display:none">HIRSCHMANN</span>
+  </div>
+  <div class="header-center">
+    <div class="app-label">Espace Opérateur</div>
+    <div class="app-name">KANBAN SYSTEM</div>
   </div>
   <div class="header-right">
-    <div class="header-meta">
-      <div class="app-label">Espace Opérateur</div>
-      <div class="app-name">KANBAN SYSTEM</div>
-    </div>
+    <div class="status-dot" title="Connecté"></div>
   </div>
 </header>
 
@@ -380,146 +627,281 @@ main {
     <p>Recherche de références</p>
   </div>
   <h1 class="page-title">Localisation Part Number</h1>
-  <p class="welcome-text" id="welcome"></p>
+  <p class="welcome-text" id="welcome">Bienvenue, <span>opérateur</span></p>
 
-  <!-- BARRE RECHERCHE -->
+  <!-- SEARCH -->
   <div class="search-panel">
     <span class="search-label">Part Number</span>
-    <input type="text" id="partnumber" class="search-input" placeholder="Ex: 812-400-001">
-    <button class="btn-search" onclick="searchPart()">Valider</button>
-    <button class="btn-scan-qr" onclick="startScan()">📷 Scanner QR</button>
+    <input type="text" id="partnumber" class="search-input"
+           placeholder="Ex: 812-400-001"
+           autocomplete="off" spellcheck="false">
+    <button class="btn-search" onclick="searchPart()"><span>🔍 Valider</span></button>
+    <button class="btn-scan-qr" id="btn-scan" onclick="toggleScan()">📷 Scanner QR</button>
   </div>
 
-  <!-- ZONE CAMÉRA -->
+  <!-- RESULT BANNER -->
+  <div id="result-banner">
+    <span class="banner-icon" id="banner-icon"></span>
+    <span class="banner-text" id="banner-text"></span>
+  </div>
+
+  <!-- SCANNER -->
   <div id="scan-wrapper">
-    <p id="scan-status">Démarrage caméra...</p>
-    <video id="scan-video" autoplay playsinline muted></video>
+    <div class="scanner-top">
+      <span class="scanner-title">📷 Scan QR Code</span>
+      <span id="scan-status">Initialisation...</span>
+    </div>
+    <div class="scanner-frame">
+      <div class="scanner-corner tl"></div>
+      <div class="scanner-corner tr"></div>
+      <div class="scanner-corner bl"></div>
+      <div class="scanner-corner br"></div>
+      <div class="scanner-line"></div>
+      <video id="scan-video" autoplay playsinline muted></video>
+    </div>
     <canvas id="scan-canvas"></canvas>
-    <button class="btn-stop" onclick="stopScan()">Arrêter le scan</button>
+    <button class="btn-stop" onclick="stopScan()">✕ Arrêter</button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <span class="kanban-title">Emplacements</span>
+      <span class="kanban-count" id="kanban-count">—</span>
+    </div>
+    <div class="toolbar-right">
+      <input type="text" class="filter-input" id="filterInput"
+             placeholder="🔍 Filtrer..."
+             oninput="filterKanban()">
+      <button class="btn-clear" onclick="clearSearch()">✕ Reset</button>
+    </div>
   </div>
 
   <!-- KANBAN -->
-  <div class="kanban-header">
-    <span class="kanban-title">Tableau des emplacements</span>
-    <span class="kanban-count" id="kanban-count"></span>
-  </div>
-
   <div id="kanban"></div>
 
-  <!-- NAVIGATION -->
+  <!-- HISTORY -->
+  <div class="history-panel">
+    <div class="history-header" onclick="toggleHistory()">
+      <span class="history-title">Historique des recherches</span>
+      <span class="history-toggle" id="history-toggle">▼</span>
+    </div>
+    <div class="history-body" id="history-body"></div>
+  </div>
+
+  <!-- NAV -->
   <div class="footer-nav">
-    <button class="btn-nav" onclick="goBack()">← Page précédente</button>
-    <button class="btn-nav" onclick="goHome()">Page initiale</button>
+    <button class="btn-nav" onclick="window.history.back()">← Précédent</button>
+    <button class="btn-nav" onclick="window.location.href='index.html'">⌂ Accueil</button>
+    <button class="btn-nav" onclick="loadPartsFromBackend()">↻ Actualiser</button>
   </div>
 
 </main>
 
+<footer>© 2026 Hirschmann Automotive — Kanban System v2.0</footer>
+<div id="toast-container"></div>
+
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener('DOMContentLoaded', function () {
 
-  const username = 'cher opérateur';
-  document.getElementById("welcome").innerText = `Bienvenue, ${username}`;
+  // ─── STATE ───────────────────────────────────────
+  let partsDB        = [];
+  let currentFilter  = '';
+  let currentSearch  = '';
+  let videoStream    = null;
+  let animFrameId    = null;
+  let scannerActive  = false;
+  let historyOpen    = false;
+  let operatorHistory = JSON.parse(localStorage.getItem('opHistory') || '[]');
 
-  let partsDB = [];
-  let operatorHistory = JSON.parse(localStorage.getItem("operatorHistory") || "[]");
-  let videoStream   = null;
-  let animFrameId   = null;
-  let scannerActive = false;
+  const videoEl     = document.getElementById('scan-video');
+  const canvasEl    = document.getElementById('scan-canvas');
+  const ctx2d       = canvasEl.getContext('2d');
+  const scanWrapper = document.getElementById('scan-wrapper');
+  const scanStatus  = document.getElementById('scan-status');
 
-  const videoEl     = document.getElementById("scan-video");
-  const canvasEl    = document.getElementById("scan-canvas");
-  const ctx2d       = canvasEl.getContext("2d");
-  const scanWrapper = document.getElementById("scan-wrapper");
-  const scanStatus  = document.getElementById("scan-status");
-
-  // ── KANBAN ────────────────────────────────────────
-  function renderKanban() {
-    const highlighted = new Set(
-      Array.from(document.querySelectorAll('.box.highlight')).map(b => b.dataset.part)
-    );
-
-    const kanban = document.getElementById("kanban");
-    kanban.innerHTML = "";
-
-    const sorted = [...partsDB].sort((a, b) =>
-      (a.emplacement || "").localeCompare(b.emplacement || "")
-    );
-
-    sorted.forEach(part => {
-      const div = document.createElement("div");
-      div.className = "box";
-      div.dataset.part = part.part_number;
-      div.innerText = part.part_number;
-      if (highlighted.has(part.part_number)) div.classList.add('highlight');
-      kanban.appendChild(div);
-    });
-
-    document.getElementById("kanban-count").innerText = sorted.length + " références";
+  // ─── TOAST ───────────────────────────────────────
+  function toast(msg, type = 'info') {
+    const c = document.getElementById('toast-container');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerText = msg;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
   }
 
-  // ── BACKEND ───────────────────────────────────────
+  // ─── LOAD ────────────────────────────────────────
   async function loadPartsFromBackend() {
+    showSkeleton();
     try {
-      const res = await fetch("http://localhost:3000/getParts");
-      partsDB   = await res.json();
+      const res = await fetch('http://localhost:3000/getParts');
+      if (!res.ok) throw new Error();
+      partsDB = await res.json();
       renderKanban();
-    } catch (e) { console.error("Backend indispo:", e); }
-  }
-
-  // ── HIGHLIGHT ─────────────────────────────────────
-  function clearHighlight() {
-    document.querySelectorAll('.box').forEach(b => b.classList.remove('highlight'));
-  }
-
-  // ── RECHERCHE ─────────────────────────────────────
-  function searchPart(partValue) {
-    const raw = partValue || document.getElementById("partnumber").value.trim();
-    if (!raw) { alert("Entrez un Part Number"); return; }
-    if (partValue) document.getElementById("partnumber").value = partValue;
-
-    const needle = raw.replace(/\D/g, "");
-    document.querySelectorAll('.box').forEach(b => b.classList.remove('highlight'));
-
-    const hits = Array.from(document.querySelectorAll('.box')).filter(b =>
-      b.dataset.part.replace(/\D/g, "").includes(needle)
-    );
-
-    if (hits.length > 0) {
-      hits.forEach(b => b.classList.add('highlight'));
-      hits[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-      operatorHistory.push({ user: username, part: raw, action: "searched", timestamp: new Date().toLocaleString() });
-      localStorage.setItem("operatorHistory", JSON.stringify(operatorHistory));
-    } else {
-      alert("Part Number introuvable !");
+      toast('Données actualisées', 'success');
+    } catch {
+      // Demo data
+      partsDB = [
+        { id:1, part_number:'812-400-001', emplacement:'CASE_A1' },
+        { id:2, part_number:'812-400-002', emplacement:'CASE_A2' },
+        { id:3, part_number:'812-505-100', emplacement:'CASE_B1' },
+        { id:4, part_number:'900-120-033', emplacement:'CASE_B2' },
+        { id:5, part_number:'812-400-009', emplacement:'CASE_C1' },
+        { id:6, part_number:'701-300-011', emplacement:'CASE_C2' },
+        { id:7, part_number:'812-600-005', emplacement:'CASE_D1' },
+        { id:8, part_number:'900-220-001', emplacement:'CASE_D2' },
+      ];
+      renderKanban();
+      toast('Mode démo — backend non connecté', 'info');
     }
   }
+  window.loadPartsFromBackend = loadPartsFromBackend;
 
-  // ── SCANNER ───────────────────────────────────────
+  function showSkeleton() {
+    const k = document.getElementById('kanban');
+    k.innerHTML = Array.from({ length: 10 }, () => `<div class="skeleton-box"></div>`).join('');
+  }
+
+  // ─── RENDER ──────────────────────────────────────
+  function renderKanban() {
+    const k = document.getElementById('kanban');
+    k.innerHTML = '';
+
+    const q = currentFilter.toLowerCase();
+    const sorted = [...partsDB]
+      .sort((a,b) => a.emplacement.localeCompare(b.emplacement))
+      .filter(p => !q || p.part_number.toLowerCase().includes(q) || p.emplacement.toLowerCase().includes(q));
+
+    document.getElementById('kanban-count').innerText = sorted.length + ' référence' + (sorted.length !== 1 ? 's' : '');
+
+    if (!sorted.length) {
+      k.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:rgba(255,255,255,0.2); font-family:var(--mono); font-size:13px">Aucune référence trouvée</div>`;
+      return;
+    }
+
+    const hasHighlight = !!currentSearch;
+
+    sorted.forEach((part, idx) => {
+      const div = document.createElement('div');
+      div.className = 'box';
+      div.dataset.part = part.part_number;
+      div.style.animationDelay = (idx * 25) + 'ms';
+
+      const isMatch = hasHighlight && matchesPart(part.part_number, currentSearch);
+      if (isMatch)       div.classList.add('highlight');
+      else if (hasHighlight) div.classList.add('dimmed');
+
+      div.innerHTML = `
+        <div class="box-pn">${part.part_number}</div>
+        <div class="box-place">${part.emplacement}</div>`;
+
+      // Click to highlight
+      div.addEventListener('click', () => {
+        document.getElementById('partnumber').value = part.part_number;
+        searchPart(part.part_number);
+      });
+
+      k.appendChild(div);
+    });
+  }
+
+  function matchesPart(pn, query) {
+    return pn.replace(/\D/g,'').includes(query.replace(/\D/g,'')) ||
+           pn.toLowerCase().includes(query.toLowerCase());
+  }
+
+  // ─── FILTER ──────────────────────────────────────
+  function filterKanban() {
+    currentFilter = document.getElementById('filterInput').value.trim();
+    renderKanban();
+  }
+  window.filterKanban = filterKanban;
+
+  // ─── SEARCH ──────────────────────────────────────
+  function searchPart(partValue) {
+    const raw = partValue || document.getElementById('partnumber').value.trim();
+    if (!raw) { toast('Entrez un Part Number', 'error'); return; }
+    if (partValue) document.getElementById('partnumber').value = partValue;
+
+    currentSearch = raw;
+    renderKanban();
+
+    const hits = document.querySelectorAll('.box.highlight');
+    const banner = document.getElementById('result-banner');
+    const bannerIcon = document.getElementById('banner-icon');
+    const bannerText = document.getElementById('banner-text');
+
+    if (hits.length > 0) {
+      banner.style.display = 'flex';
+      banner.className = 'found';
+      bannerIcon.innerText = '✅';
+      bannerText.innerHTML = `<strong>${raw}</strong> trouvé — ${hits.length} correspondance${hits.length > 1 ? 's' : ''}`;
+      hits[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Save history
+      operatorHistory.unshift({ part: raw, time: new Date().toLocaleTimeString() });
+      operatorHistory = operatorHistory.slice(0, 10);
+      localStorage.setItem('opHistory', JSON.stringify(operatorHistory));
+      renderHistory();
+      toast(`${raw} localisé`, 'success');
+    } else {
+      banner.style.display = 'flex';
+      banner.className = 'notfound';
+      bannerIcon.innerText = '❌';
+      bannerText.innerHTML = `<strong>${raw}</strong> introuvable dans le kanban`;
+      toast(`${raw} introuvable`, 'error');
+    }
+  }
+  window.searchPart = searchPart;
+
+  function clearSearch() {
+    currentSearch = '';
+    currentFilter = '';
+    document.getElementById('partnumber').value = '';
+    document.getElementById('filterInput').value = '';
+    document.getElementById('result-banner').style.display = 'none';
+    renderKanban();
+  }
+  window.clearSearch = clearSearch;
+
+  // ─── SCANNER ─────────────────────────────────────
+  function toggleScan() {
+    if (scannerActive) stopScan();
+    else startScan();
+  }
+  window.toggleScan = toggleScan;
+
   async function startScan() {
     if (scannerActive) return;
-    scanWrapper.style.display = "flex";
-    scanStatus.innerText = "Démarrage caméra...";
+    scanWrapper.style.display = 'flex';
+    scanStatus.innerText = 'Démarrage caméra...';
+    document.getElementById('btn-scan').classList.add('active');
+    document.getElementById('btn-scan').innerText = '⏹ Arrêter';
 
     try {
       videoStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } }
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } }
       });
     } catch (err) {
-      scanStatus.innerText = "❌ " + err.message;
+      scanStatus.innerText = '❌ ' + err.message;
+      toast('Caméra inaccessible', 'error');
+      document.getElementById('btn-scan').classList.remove('active');
+      document.getElementById('btn-scan').innerText = '📷 Scanner QR';
       return;
     }
 
     videoEl.srcObject = videoStream;
     scannerActive = true;
 
-    videoEl.addEventListener("loadedmetadata", function onMeta() {
-      videoEl.removeEventListener("loadedmetadata", onMeta);
+    videoEl.addEventListener('loadedmetadata', function onMeta() {
+      videoEl.removeEventListener('loadedmetadata', onMeta);
       videoEl.play().then(() => {
-        scanStatus.innerText = "Pointez vers un QR Code...";
+        scanStatus.innerText = 'Pointez vers un QR Code...';
         animFrameId = requestAnimationFrame(scanFrame);
-      }).catch(e => { scanStatus.innerText = "❌ " + e.message; });
+      }).catch(e => { scanStatus.innerText = '❌ ' + e.message; });
     });
   }
+  window.startScan = startScan;
 
   function scanFrame() {
     if (!scannerActive) return;
@@ -528,9 +910,10 @@ document.addEventListener("DOMContentLoaded", function () {
       canvasEl.height = videoEl.videoHeight;
       ctx2d.drawImage(videoEl, 0, 0);
       const img  = ctx2d.getImageData(0, 0, canvasEl.width, canvasEl.height);
-      const code = jsQR(img.data, img.width, img.height, { inversionAttempts: "dontInvert" });
+      const code = jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
       if (code && code.data) {
-        scanStatus.innerText = "✅ Scanné : " + code.data;
+        scanStatus.innerText = '✅ ' + code.data;
+        if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
         stopScan();
         searchPart(code.data);
         return;
@@ -544,28 +927,52 @@ document.addEventListener("DOMContentLoaded", function () {
     if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = null; }
     if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
     videoEl.srcObject = null;
-    scanWrapper.style.display = "none";
-    scanStatus.innerText = "";
+    scanWrapper.style.display = 'none';
+    document.getElementById('btn-scan').classList.remove('active');
+    document.getElementById('btn-scan').innerText = '📷 Scanner QR';
+  }
+  window.stopScan = stopScan;
+
+  // ─── HISTORY ─────────────────────────────────────
+  function toggleHistory() {
+    historyOpen = !historyOpen;
+    document.getElementById('history-body').className = 'history-body' + (historyOpen ? ' open' : '');
+    document.getElementById('history-toggle').className = 'history-toggle' + (historyOpen ? ' open' : '');
+    if (historyOpen) renderHistory();
+  }
+  window.toggleHistory = toggleHistory;
+
+  function renderHistory() {
+    const body = document.getElementById('history-body');
+    if (!operatorHistory.length) {
+      body.innerHTML = `<div class="history-empty">Aucune recherche pour cette session</div>`;
+      return;
+    }
+    body.innerHTML = operatorHistory.map(h => `
+      <div class="history-item">
+        <span class="history-pn">${h.part}</span>
+        <span class="history-time">${h.time}</span>
+      </div>`).join('');
   }
 
-  // ── NAVIGATION ────────────────────────────────────
-  function goBack() { window.history.back(); }
-  function goHome() { window.location.href = "index.html"; }
+  // ─── KEYBOARD ────────────────────────────────────
+  document.getElementById('partnumber').addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchPart();
+  });
+  document.getElementById('partnumber').addEventListener('input', () => {
+    if (!document.getElementById('partnumber').value) clearSearch();
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { stopScan(); clearSearch(); }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault();
+      document.getElementById('partnumber').focus();
+    }
+  });
 
-  // ── EXPOSER ───────────────────────────────────────
-  window.searchPart    = searchPart;
-  window.clearHighlight= clearHighlight;
-  window.startScan     = startScan;
-  window.stopScan      = stopScan;
-  window.goBack        = goBack;
-  window.goHome        = goHome;
-
-  // ── INIT ──────────────────────────────────────────
-  document.getElementById("partnumber").addEventListener("keydown", e => { if (e.key === "Enter") searchPart(); });
-  document.getElementById("partnumber").addEventListener("input", clearHighlight);
-
+  // ─── INIT ────────────────────────────────────────
   loadPartsFromBackend();
-  setInterval(loadPartsFromBackend, 5000);
+  setInterval(loadPartsFromBackend, 10000);
 });
 </script>
 </body>
