@@ -5,236 +5,471 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel — Hirschmann Automotive</title>
 <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;600&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
 :root {
-  --navy:    #0a1f3c;
-  --navy-md: #0d2850;
-  --blue:    #1a4a8a;
+  --navy:    #08192e;
+  --navy-md: #0c2240;
+  --navy-lt: #112c50;
+  --blue:    #1b50a0;
+  --blue-lt: #2a6fcc;
   --red:     #c0272d;
   --red-lt:  #e8454b;
+  --red-dim: rgba(192,39,45,0.18);
   --white:   #ffffff;
-  --gray:    #6b7a8d;
-  --success: #27ae60;
+  --off:     rgba(255,255,255,0.55);
+  --faint:   rgba(255,255,255,0.07);
+  --border:  rgba(255,255,255,0.09);
+  --success: #22c55e;
+  --success-dim: rgba(34,197,94,0.15);
+  --warn:    #f59e0b;
+  --mono:    'DM Mono', monospace;
+  --sans:    'Barlow', sans-serif;
+  --cond:    'Barlow Condensed', sans-serif;
+  --radius:  6px;
+  --card-w:  200px;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Barlow', sans-serif;
-  background-color: var(--navy);
+  font-family: var(--sans);
+  background: var(--navy);
   color: var(--white);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
 }
 
-/* grille de fond */
+/* ─── SCANLINE OVERLAY ─── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.04) 2px,
+    rgba(0,0,0,0.04) 4px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ─── GRID BG ─── */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   background-image:
-    repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px),
-    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,0.018) 60px, rgba(255,255,255,0.018) 61px);
+    repeating-linear-gradient(0deg,  transparent, transparent 59px, rgba(255,255,255,0.025) 59px, rgba(255,255,255,0.025) 60px),
+    repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(255,255,255,0.025) 59px, rgba(255,255,255,0.025) 60px);
   pointer-events: none;
   z-index: 0;
 }
 
-/* ── BARRE ROUGE ── */
-.top-bar {
-  height: 5px;
-  background: linear-gradient(90deg, var(--red), var(--red-lt), var(--red));
-  position: relative;
-  z-index: 10;
-  flex-shrink: 0;
+/* ─── PULSE BG GLOW ─── */
+.bg-glow {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  pointer-events: none;
+  z-index: 0;
+  animation: pulse-glow 8s ease-in-out infinite alternate;
+}
+.bg-glow-1 {
+  width: 600px; height: 600px;
+  top: -200px; left: -200px;
+  background: rgba(26,80,160,0.12);
+}
+.bg-glow-2 {
+  width: 500px; height: 500px;
+  bottom: -150px; right: -150px;
+  background: rgba(192,39,45,0.08);
+  animation-delay: -4s;
 }
 
-/* ── HEADER ── */
+@keyframes pulse-glow {
+  from { opacity: 0.6; transform: scale(1); }
+  to   { opacity: 1;   transform: scale(1.15); }
+}
+
+/* ─── RED BAR ─── */
+.top-bar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--red) 0%, var(--red-lt) 50%, var(--red) 100%);
+  background-size: 200% 100%;
+  animation: bar-slide 3s linear infinite;
+  position: relative;
+  z-index: 100;
+  flex-shrink: 0;
+}
+@keyframes bar-slide {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+/* ─── HEADER ─── */
 header {
   position: relative;
-  z-index: 10;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 50px;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
-  background: rgba(10,31,60,0.7);
-  backdrop-filter: blur(8px);
+  padding: 16px 48px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(8,25,46,0.85);
+  backdrop-filter: blur(14px);
   flex-shrink: 0;
+  gap: 16px;
 }
 
-.header-logo img {
-  height: 44px;
-  filter: brightness(0) invert(1);
-  opacity: 0.92;
+.header-logo {
+  flex-shrink: 0;
 }
+.header-logo img {
+  height: 38px;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+  display: block;
+}
+/* Fallback text logo when image missing */
+.logo-fallback {
+  display: none;
+  font-family: var(--cond);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--white);
+}
+.header-logo img.broken + .logo-fallback { display: block; }
 
 .header-center {
   text-align: center;
+  flex: 1;
 }
-.header-center .app-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px;
+.app-label {
+  font-family: var(--mono);
+  font-size: 9px;
   letter-spacing: 3px;
   text-transform: uppercase;
-  color: var(--red);
-  font-weight: 600;
+  color: var(--red-lt);
+  opacity: 0.85;
 }
-.header-center .app-name {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
+.app-name {
+  font-family: var(--cond);
+  font-size: 22px;
+  font-weight: 800;
   color: var(--white);
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  line-height: 1.1;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* Status indicator */
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 6px var(--success);
+  animation: blink 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes blink {
+  0%,100% { opacity: 1; box-shadow: 0 0 6px var(--success); }
+  50%      { opacity: 0.4; box-shadow: 0 0 2px var(--success); }
 }
 
 .btn-logout {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px;
-  font-weight: 600;
+  font-family: var(--cond);
+  font-size: 11px;
+  font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  padding: 9px 18px;
-  border-radius: 3px;
-  border: 1px solid rgba(192,39,45,0.5);
-  background: rgba(192,39,45,0.15);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(192,39,45,0.4);
+  background: var(--red-dim);
   color: var(--red-lt);
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s;
 }
-.btn-logout:hover { background: rgba(192,39,45,0.3); border-color: var(--red); }
+.btn-logout:hover {
+  background: rgba(192,39,45,0.3);
+  border-color: var(--red);
+  transform: translateY(-1px);
+}
+.btn-logout:active { transform: translateY(0); }
 
-/* ── MAIN ── */
+/* ─── MAIN ─── */
 main {
   position: relative;
   z-index: 10;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   width: 100%;
-  padding: 40px 30px 60px;
+  padding: 36px 40px 60px;
   flex: 1;
 }
 
-/* ── EYEBROW + TITRE ── */
-.section-eyebrow {
+/* ─── STATS ROW ─── */
+.stats-row {
   display: flex;
-  align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
-}
-.section-eyebrow span {
-  display: block; width: 28px; height: 2px; background: var(--red);
-}
-.section-eyebrow p {
-  font-size: 10px; letter-spacing: 4px;
-  text-transform: uppercase; color: var(--red); font-weight: 600;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
 }
 
-.page-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 30px; font-weight: 700;
-  color: var(--white); margin-bottom: 32px;
+.stat-card {
+  flex: 1;
+  min-width: 130px;
+  background: var(--faint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
 }
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--blue-lt);
+}
+.stat-card:hover { border-color: rgba(255,255,255,0.18); }
 
-/* ── AJOUT PART ── */
+.stat-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--off);
+  margin-bottom: 6px;
+}
+.stat-value {
+  font-family: var(--cond);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1;
+  transition: all 0.4s;
+}
+.stat-card.highlight::before { background: var(--red); }
+.stat-card.highlight .stat-value { color: var(--red-lt); }
+
+/* ─── ADD PANEL ─── */
 .add-panel {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
   background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.09);
-  border-radius: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 20px 24px;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.25s;
 }
+.add-panel:focus-within {
+  border-color: rgba(34,197,94,0.4);
+  background: rgba(34,197,94,0.03);
+}
+.add-panel::after {
+  content: '+ NOUVEAU';
+  position: absolute;
+  top: 50%; right: 24px;
+  transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: rgba(255,255,255,0.06);
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.add-panel:focus-within::after { opacity: 0; }
 
 .add-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px;
+  font-family: var(--mono);
+  font-size: 10px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.35);
+  color: rgba(255,255,255,0.3);
   white-space: nowrap;
 }
 
 .add-input {
   flex: 1;
-  min-width: 200px;
+  min-width: 180px;
   padding: 11px 16px;
-  font-family: 'Barlow', sans-serif;
-  font-size: 15px;
-  background: rgba(255,255,255,0.06);
+  font-family: var(--mono);
+  font-size: 14px;
+  background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 3px;
+  border-radius: var(--radius);
   color: var(--white);
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background 0.2s;
+  letter-spacing: 1px;
 }
-.add-input::placeholder { color: rgba(255,255,255,0.2); }
-.add-input:focus { border-color: rgba(39,174,96,0.7); }
+.add-input::placeholder { color: rgba(255,255,255,0.18); }
+.add-input:focus {
+  border-color: rgba(34,197,94,0.5);
+  background: rgba(34,197,94,0.04);
+}
 
 .btn-add {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 13px; font-weight: 600;
+  font-family: var(--cond);
+  font-size: 12px; font-weight: 700;
   letter-spacing: 2px; text-transform: uppercase;
-  padding: 11px 26px;
-  border-radius: 3px; border: none;
-  background: var(--success);
-  color: var(--white);
-  cursor: pointer; transition: 0.2s;
+  padding: 11px 28px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(34,197,94,0.4);
+  background: var(--success-dim);
+  color: var(--success);
+  cursor: pointer;
+  transition: all 0.2s;
   white-space: nowrap;
-}
-.btn-add:hover { background: #1e8449; }
-
-/* ── KANBAN HEADER ── */
-.kanban-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.kanban-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px; letter-spacing: 3px;
-  text-transform: uppercase;
-  color: rgba(255,255,255,0.3);
-}
-.kanban-count {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px; letter-spacing: 2px;
-  color: rgba(255,255,255,0.2);
-}
-
-/* ── KANBAN GRID ── */
-#kanban {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(160px, 1fr));
-  gap: 16px;
-  justify-items: center;
-}
-
-/* ── BOX ── */
-.box {
-  width: 100%;
-  min-height: 180px;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 4px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  padding: 16px 10px 14px;
-  cursor: grab;
-  transition: transform 0.2s, border-color 0.2s, background 0.2s;
   position: relative;
   overflow: hidden;
 }
+.btn-add::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--success);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s ease;
+  z-index: 0;
+}
+.btn-add:hover { color: var(--navy); border-color: var(--success); }
+.btn-add:hover::before { transform: scaleX(1); }
+.btn-add span { position: relative; z-index: 1; }
+.btn-add:active { transform: scale(0.97); }
 
-/* accent rouge en haut de chaque box */
+/* ─── TOOLBAR ─── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.search-input {
+  padding: 7px 14px;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--faint);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--white);
+  outline: none;
+  width: 200px;
+  transition: border-color 0.2s, width 0.3s;
+  letter-spacing: 0.5px;
+}
+.search-input::placeholder { color: rgba(255,255,255,0.2); }
+.search-input:focus {
+  border-color: rgba(26,80,160,0.6);
+  width: 240px;
+}
+
+.view-toggle {
+  display: flex;
+  gap: 4px;
+}
+.btn-view {
+  width: 30px; height: 30px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--faint);
+  color: rgba(255,255,255,0.35);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+.btn-view.active {
+  border-color: rgba(26,80,160,0.6);
+  background: rgba(26,80,160,0.2);
+  color: var(--white);
+}
+.btn-view:hover { color: var(--white); }
+
+/* ─── KANBAN GRID ─── */
+#kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr));
+  gap: 14px;
+}
+
+#kanban.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ─── BOX CARD ─── */
+.box {
+  background: rgba(12,34,64,0.7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 12px 14px;
+  cursor: grab;
+  transition: transform 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+  position: relative;
+  overflow: hidden;
+  animation: card-in 0.35s ease both;
+  user-select: none;
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+
 .box::before {
   content: '';
   position: absolute;
@@ -246,241 +481,900 @@ main {
 
 .box:hover {
   transform: translateY(-4px);
-  border-color: rgba(255,255,255,0.16);
-  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(17,44,80,0.85);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4);
 }
 .box:hover::before { background: var(--red); }
+.box:active { cursor: grabbing; transform: scale(0.97); }
 
+/* Drag state */
+.box.dragging {
+  opacity: 0.4;
+  transform: scale(0.95);
+  border-color: var(--blue-lt);
+}
+.box.drag-over {
+  border-color: var(--success);
+  background: rgba(34,197,94,0.07);
+  transform: scale(1.03);
+}
+.box.drag-over::before { background: var(--success); }
+
+/* Part number label */
 .box-label {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: rgba(255,255,255,0.85);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.9);
   text-align: center;
   margin-bottom: 12px;
   word-break: break-all;
+  letter-spacing: 0.5px;
 }
 
-/* QR code style */
+/* Emplacement badge */
+.box-place {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.25);
+  margin-top: 10px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 3px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* QR canvas */
 .box canvas {
   border-radius: 4px;
-  filter: invert(1) brightness(0.85);
-  opacity: 0.9;
+  filter: invert(1) brightness(0.88);
+  opacity: 0.92;
+  display: block;
 }
 
-/* ── FOOTER NAV ── */
+/* Action buttons (appear on hover) */
+.box-actions {
+  position: absolute;
+  top: 8px; right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.box:hover .box-actions { opacity: 1; }
+
+.btn-icon {
+  width: 26px; height: 26px;
+  border-radius: 4px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(10,25,46,0.9);
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: all 0.15s;
+}
+.btn-icon:hover.edit-btn { background: rgba(26,80,160,0.6); color: #fff; border-color: var(--blue-lt); }
+.btn-icon:hover.del-btn  { background: rgba(192,39,45,0.6); color: #fff; border-color: var(--red); }
+
+/* ─── LIST VIEW ─── */
+#kanban.list-view .box {
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 20px;
+  gap: 16px;
+}
+#kanban.list-view .box canvas {
+  width: 48px !important;
+  height: 48px !important;
+  filter: invert(1) brightness(0.88);
+  flex-shrink: 0;
+}
+#kanban.list-view .box-label {
+  flex: 1;
+  text-align: left;
+  margin-bottom: 0;
+  font-size: 14px;
+}
+#kanban.list-view .box-place {
+  margin-top: 0;
+}
+#kanban.list-view .box-actions {
+  position: static;
+  opacity: 1;
+}
+#kanban.list-view .box:hover {
+  transform: translateX(4px);
+}
+
+/* ─── MODAL ─── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,14,28,0.85);
+  backdrop-filter: blur(6px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fade-in 0.2s ease;
+}
+.modal-overlay.closing { animation: fade-out 0.2s ease forwards; }
+
+@keyframes fade-in  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+
+.modal {
+  background: #0c2240;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+  animation: modal-in 0.25s cubic-bezier(.34,1.56,.64,1) both;
+}
+.modal-overlay.closing .modal { animation: modal-out 0.2s ease forwards; }
+
+@keyframes modal-in  { from { opacity:0; transform:scale(0.92) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+@keyframes modal-out { from { opacity:1; transform:scale(1); } to { opacity:0; transform:scale(0.95); } }
+
+.modal-title {
+  font-family: var(--cond);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--white);
+  margin-bottom: 20px;
+}
+.modal-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--off);
+  margin-bottom: 8px;
+  display: block;
+}
+.modal-input {
+  width: 100%;
+  padding: 12px 16px;
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 1px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius);
+  color: var(--white);
+  outline: none;
+  transition: border-color 0.2s;
+  margin-bottom: 20px;
+}
+.modal-input:focus { border-color: rgba(26,80,160,0.7); }
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn-modal {
+  font-family: var(--cond);
+  font-size: 12px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  padding: 10px 22px;
+  border-radius: var(--radius);
+  cursor: pointer; transition: all 0.18s;
+}
+.btn-cancel {
+  border: 1px solid var(--border);
+  background: var(--faint);
+  color: var(--off);
+}
+.btn-cancel:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+.btn-confirm {
+  border: 1px solid rgba(26,80,160,0.5);
+  background: rgba(26,80,160,0.25);
+  color: var(--white);
+}
+.btn-confirm:hover { background: var(--blue); }
+.btn-danger {
+  border: 1px solid rgba(192,39,45,0.4);
+  background: var(--red-dim);
+  color: var(--red-lt);
+}
+.btn-danger:hover { background: rgba(192,39,45,0.35); border-color: var(--red); }
+
+.btn-close-modal {
+  position: absolute;
+  top: 12px; right: 12px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--faint);
+  color: var(--off);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: all 0.15s;
+}
+.btn-close-modal:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+
+/* ─── TOAST ─── */
+#toast-container {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  padding: 12px 18px;
+  border-radius: var(--radius);
+  border: 1px solid;
+  backdrop-filter: blur(10px);
+  animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
+  pointer-events: none;
+  max-width: 300px;
+}
+.toast.success { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.3); color: var(--success); }
+.toast.error   { background: rgba(192,39,45,0.15); border-color: rgba(192,39,45,0.3);  color: var(--red-lt); }
+.toast.info    { background: rgba(26,80,160,0.15);  border-color: rgba(26,80,160,0.3);  color: #7ab3f5; }
+
+@keyframes toast-in  { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+@keyframes toast-out { from { opacity:1; } to { opacity:0; } }
+
+/* ─── EMPTY STATE ─── */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 60px 20px;
+}
+.empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+.empty-title {
+  font-family: var(--cond);
+  font-size: 18px;
+  color: rgba(255,255,255,0.25);
+  letter-spacing: 1px;
+}
+
+/* ─── LOADING ─── */
+.loading-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 14px;
+}
+.skeleton-box {
+  height: 200px;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.04) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.04) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* ─── FOOTER NAV ─── */
 .footer-nav {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  margin-top: 44px;
+  gap: 10px;
+  margin-top: 48px;
   padding-top: 24px;
   border-top: 1px solid rgba(255,255,255,0.06);
+  flex-wrap: wrap;
 }
-
 .btn-nav {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 12px; font-weight: 600;
+  font-family: var(--cond);
+  font-size: 11px; font-weight: 700;
   letter-spacing: 2px; text-transform: uppercase;
   padding: 10px 22px;
-  border-radius: 3px;
-  border: 1px solid rgba(255,255,255,0.1);
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.45);
-  cursor: pointer; transition: 0.2s;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--faint);
+  color: rgba(255,255,255,0.4);
+  cursor: pointer; transition: all 0.2s;
 }
-.btn-nav:hover {
-  background: rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.75);
-}
+.btn-nav:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.2); }
 
-/* ── FOOTER ── */
+/* ─── FOOTER ─── */
 footer {
   position: relative;
   z-index: 10;
   text-align: center;
-  padding: 16px;
-  font-size: 11px;
-  color: rgba(255,255,255,0.12);
+  padding: 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: rgba(255,255,255,0.1);
   letter-spacing: 1px;
   border-top: 1px solid rgba(255,255,255,0.05);
   flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════
+   📱 MOBILE — ≤ 768px
+═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  :root { --card-w: 140px; }
+
+  header {
+    padding: 12px 16px;
+    flex-wrap: nowrap;
+  }
+  .header-logo img { height: 28px; }
+  .app-name { font-size: 15px; }
+  .app-label { font-size: 8px; }
+
+  .btn-logout {
+    padding: 7px 10px;
+    font-size: 9px;
+    letter-spacing: 1px;
+  }
+  .status-dot { display: none; }
+
+  main {
+    padding: 20px 16px 40px;
+  }
+
+  .stats-row {
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    padding: 12px 14px;
+    min-width: 0;
+  }
+  .stat-value { font-size: 22px; }
+  .stat-label { font-size: 8px; }
+
+  .add-panel {
+    padding: 14px 16px;
+    margin-bottom: 20px;
+  }
+  .add-panel::after { display: none; }
+  .add-label { display: none; }
+  .add-input { min-width: 0; font-size: 13px; }
+  .btn-add { padding: 11px 18px; font-size: 11px; }
+
+  .toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .toolbar-right {
+    justify-content: space-between;
+  }
+  .search-input {
+    width: 100%;
+    flex: 1;
+  }
+  .search-input:focus { width: 100%; }
+
+  #kanban {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  #kanban.list-view {
+    grid-template-columns: 1fr;
+  }
+
+  .box { padding: 12px 8px 10px; }
+  .box-label { font-size: 11px; margin-bottom: 8px; }
+  .box canvas { width: 90px !important; height: 90px !important; }
+  .box-place { font-size: 8px; }
+
+  /* Always show actions on mobile */
+  .box-actions { opacity: 1 !important; }
+  .btn-icon { width: 24px; height: 24px; font-size: 10px; }
+
+  #kanban.list-view .box canvas {
+    width: 40px !important; height: 40px !important;
+  }
+  #kanban.list-view .box { padding: 10px 14px; gap: 12px; }
+
+  .modal { padding: 24px 20px; }
+  .modal-title { font-size: 16px; }
+
+  .footer-nav { gap: 8px; }
+  .btn-nav { padding: 9px 16px; font-size: 10px; }
+
+  #toast-container { bottom: 16px; right: 12px; left: 12px; }
+  .toast { max-width: 100%; }
+}
+
+@media (max-width: 400px) {
+  #kanban {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  :root { --card-w: 120px; }
 }
 </style>
 </head>
 <body>
 
+<div class="bg-glow bg-glow-1"></div>
+<div class="bg-glow bg-glow-2"></div>
+
 <div class="top-bar"></div>
 
 <header>
   <div class="header-logo">
-    <img src="images\Hirschmann_Automotive.png" alt="Hirschmann Automotive">
+    <img src="images/Hirschmann_Automotive.png" alt="Hirschmann Automotive"
+         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+    <span class="logo-fallback" style="display:none">HIRSCHMANN</span>
   </div>
   <div class="header-center">
     <div class="app-label">Espace Administrateur</div>
     <div class="app-name">KANBAN SYSTEM</div>
   </div>
-  <button class="btn-logout" onclick="logout()">🔓 Déconnexion</button>
+  <div class="header-right">
+    <div class="status-dot" title="Connecté"></div>
+    <button class="btn-logout" onclick="logout()">🔓 Déconnexion</button>
+  </div>
 </header>
 
 <main>
 
-  <div class="section-eyebrow">
-    <span></span>
-    <p>Gestion des références</p>
+  <!-- STATS -->
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card highlight">
+      <div class="stat-label">Références</div>
+      <div class="stat-value" id="stat-total">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Emplacements</div>
+      <div class="stat-value" id="stat-places">—</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Dernière action</div>
+      <div class="stat-value" id="stat-last" style="font-size:14px; padding-top:6px; color: var(--off)">—</div>
+    </div>
   </div>
-  <h1 class="page-title">Admin Panel</h1>
 
-  <!-- AJOUT PART -->
+  <!-- ADD PANEL -->
   <div class="add-panel">
-    <span class="add-label">Nouveau Part Number</span>
-    <input type="text" id="newPart" class="add-input" placeholder="Ex: 812-400-001"
+    <span class="add-label">Nouveau Part</span>
+    <input type="text" id="newPart" class="add-input"
+           placeholder="Ex: 812-400-001"
            onkeydown="if(event.key==='Enter') addPart()">
-    <button class="btn-add" onclick="addPart()">+ Ajouter</button>
+    <button class="btn-add" onclick="addPart()"><span>+ Ajouter</span></button>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <span class="toolbar-title">Tableau des emplacements</span>
+    </div>
+    <div class="toolbar-right">
+      <input type="text" class="search-input" id="searchInput"
+             placeholder="🔍 Rechercher..."
+             oninput="filterParts()">
+      <div class="view-toggle">
+        <button class="btn-view active" id="btn-grid" title="Grille" onclick="setView('grid')">⊞</button>
+        <button class="btn-view"        id="btn-list" title="Liste"  onclick="setView('list')">☰</button>
+      </div>
+    </div>
   </div>
 
   <!-- KANBAN -->
-  <div class="kanban-header">
-    <span class="kanban-title">Tableau des emplacements</span>
-    <span class="kanban-count" id="kanban-count"></span>
-  </div>
-
   <div id="kanban"></div>
 
   <!-- NAVIGATION -->
   <div class="footer-nav">
-    <button class="btn-nav" onclick="goBack()">← Page précédente</button>
-    <button class="btn-nav" onclick="goHome()">Page initiale</button>
+    <button class="btn-nav" onclick="goBack()">← Précédent</button>
+    <button class="btn-nav" onclick="goHome()">⌂ Accueil</button>
+    <button class="btn-nav" onclick="loadParts()">↻ Actualiser</button>
   </div>
 
 </main>
 
-<footer>© 2026 Hirschmann Automotive — Kanban System</footer>
+<footer>© 2026 Hirschmann Automotive — Kanban System v2.0</footer>
+
+<!-- MODAL -->
+<div id="modal" style="display:none"></div>
+
+<!-- TOASTS -->
+<div id="toast-container"></div>
 
 <script>
-let partsDB  = [];
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let partsDB   = [];
+let filtered  = [];
 let draggedId = null;
+let viewMode  = 'grid';
+let lastAction = '—';
 
-// ══════════════════════════════════════════════════════
-// 🔄 CHARGEMENT
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  LOAD
+// ════════════════════════════════════════════════════════
 async function loadParts() {
+  showSkeleton();
   try {
     const res = await fetch("http://localhost:3000/getParts");
-    partsDB   = await res.json();
-    renderKanban();
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    partsDB = await res.json();
+    updateStats();
+    filterParts();
+    toast('Données chargées', 'success');
   } catch(err) {
-    console.error(err);
-    alert("Backend non connecté !");
+    console.warn("Backend non connecté — données de démo chargées.");
+    // Demo data for preview
+    partsDB = [
+      { id:1, part_number:'812-400-001', emplacement:'CASE_A1' },
+      { id:2, part_number:'812-400-002', emplacement:'CASE_A2' },
+      { id:3, part_number:'812-505-100', emplacement:'CASE_B1' },
+      { id:4, part_number:'900-120-033', emplacement:'CASE_B2' },
+      { id:5, part_number:'812-400-009', emplacement:'CASE_C1' },
+    ];
+    updateStats();
+    filterParts();
+    toast('Mode démo — backend non connecté', 'info');
   }
 }
 
-// ══════════════════════════════════════════════════════
-// 🎨 RENDU KANBAN
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  SKELETON LOADING
+// ════════════════════════════════════════════════════════
+function showSkeleton() {
+  const kanban = document.getElementById('kanban');
+  kanban.className = viewMode === 'grid' ? '' : 'list-view';
+  kanban.innerHTML = Array.from({length: 8}, () =>
+    `<div class="skeleton-box"></div>`
+  ).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  STATS
+// ════════════════════════════════════════════════════════
+function updateStats() {
+  animateCount('stat-total', partsDB.length);
+  const uniquePlaces = new Set(partsDB.map(p => p.emplacement)).size;
+  animateCount('stat-places', uniquePlaces);
+  document.getElementById('stat-last').innerText = lastAction;
+}
+
+function animateCount(id, target) {
+  const el = document.getElementById(id);
+  const start = parseInt(el.innerText) || 0;
+  const dur = 400, step = 16;
+  let t = 0;
+  const interval = setInterval(() => {
+    t += step;
+    el.innerText = Math.round(start + (target - start) * Math.min(t / dur, 1));
+    if (t >= dur) clearInterval(interval);
+  }, step);
+}
+
+// ════════════════════════════════════════════════════════
+//  FILTER
+// ════════════════════════════════════════════════════════
+function filterParts() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  filtered = q
+    ? partsDB.filter(p => p.part_number.toLowerCase().includes(q) || p.emplacement.toLowerCase().includes(q))
+    : [...partsDB];
+  renderKanban();
+}
+
+// ════════════════════════════════════════════════════════
+//  VIEW TOGGLE
+// ════════════════════════════════════════════════════════
+function setView(mode) {
+  viewMode = mode;
+  document.getElementById('btn-grid').className = 'btn-view' + (mode === 'grid' ? ' active' : '');
+  document.getElementById('btn-list').className = 'btn-view' + (mode === 'list' ? ' active' : '');
+  renderKanban();
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER
+// ════════════════════════════════════════════════════════
 function renderKanban() {
-  const kanban = document.getElementById("kanban");
-  kanban.innerHTML = "";
+  const kanban = document.getElementById('kanban');
+  kanban.className = viewMode === 'list' ? 'list-view' : '';
+  kanban.innerHTML = '';
 
-  partsDB.sort((a, b) => a.emplacement.localeCompare(b.emplacement));
+  const sorted = [...filtered].sort((a,b) => a.emplacement.localeCompare(b.emplacement));
 
-  document.getElementById("kanban-count").innerText = partsDB.length + " références";
+  if (sorted.length === 0) {
+    kanban.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📦</div>
+        <div class="empty-title">Aucune référence trouvée</div>
+      </div>`;
+    return;
+  }
 
-  partsDB.forEach(part => {
-    const div = document.createElement("div");
-    div.className  = "box";
+  sorted.forEach((part, idx) => {
+    const div = document.createElement('div');
+    div.className  = 'box';
     div.dataset.id = part.id;
     div.draggable  = true;
+    div.style.animationDelay = (idx * 35) + 'ms';
 
-    // label
-    const label = document.createElement("div");
-    label.className = "box-label";
+    // Action buttons
+    const actions = document.createElement('div');
+    actions.className = 'box-actions';
+    actions.innerHTML = `
+      <button class="btn-icon edit-btn" title="Modifier" onclick="openEditModal(${part.id}, event)">✎</button>
+      <button class="btn-icon del-btn"  title="Supprimer" onclick="openDeleteModal(${part.id}, event)">✕</button>`;
+    div.appendChild(actions);
+
+    // Label
+    const label = document.createElement('div');
+    label.className = 'box-label';
     label.innerText = part.part_number;
     div.appendChild(label);
 
-    // QR Code auto
-    const qrCanvas = document.createElement("canvas");
-    qrCanvas.id = `qr-${part.id}`;
+    // QR
+    const qrCanvas = document.createElement('canvas');
+    const qrSize = viewMode === 'list' ? 48 : 110;
     div.appendChild(qrCanvas);
-    QRCode.toCanvas(qrCanvas, part.part_number, { width: 120 }, err => {
-      if (err) console.error(err);
-    });
+    QRCode.toCanvas(qrCanvas, part.part_number, { width: qrSize, margin: 1 }, () => {});
+
+    // Place badge
+    const place = document.createElement('div');
+    place.className = 'box-place';
+    place.innerText = part.emplacement;
+    div.appendChild(place);
 
     // DRAG
-    div.addEventListener("dragstart", () => { draggedId = part.id; });
-    div.addEventListener("dragover",  e  => e.preventDefault());
-    div.addEventListener("drop", async e => {
+    div.addEventListener('dragstart', e => {
+      draggedId = part.id;
+      setTimeout(() => div.classList.add('dragging'), 0);
+    });
+    div.addEventListener('dragend', () => {
+      div.classList.remove('dragging');
+      document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+    });
+    div.addEventListener('dragenter', e => {
       e.preventDefault();
+      if (draggedId !== part.id) div.classList.add('drag-over');
+    });
+    div.addEventListener('dragleave', () => div.classList.remove('drag-over'));
+    div.addEventListener('dragover',  e => e.preventDefault());
+    div.addEventListener('drop', async e => {
+      e.preventDefault();
+      div.classList.remove('drag-over');
       if (draggedId === part.id) return;
-      const dragged   = partsDB.find(p => p.id == draggedId);
-      const target    = partsDB.find(p => p.id == part.id);
-      const tempPlace = dragged.emplacement;
+      const dragged = partsDB.find(p => p.id == draggedId);
+      const target  = partsDB.find(p => p.id == part.id);
+      if (!dragged || !target) return;
+      const tmpPlace = dragged.emplacement;
       await updatePart(dragged.id, dragged.part_number, target.emplacement);
-      await updatePart(target.id,  target.part_number,  tempPlace);
+      await updatePart(target.id,  target.part_number,  tmpPlace);
+      lastAction = 'Swap ' + dragged.part_number;
       await loadParts();
+      toast('Emplacements échangés', 'success');
     });
 
-    // DOUBLE CLICK → modifier / supprimer
-    div.addEventListener("dblclick", async () => {
-      const action = prompt("1 : Modifier\n2 : Supprimer", "1");
-      if (action === "1") {
-        const newPart = prompt("Nouveau Part Number :", part.part_number);
-        if (newPart) { await updatePart(part.id, newPart, part.emplacement); loadParts(); }
-      }
-      if (action === "2") {
-        if (confirm("Supprimer ce Part Number ?")) { await deletePart(part.id); loadParts(); }
-      }
-    });
+    // TOUCH LONG PRESS (mobile)
+    let pressTimer;
+    div.addEventListener('touchstart', () => {
+      pressTimer = setTimeout(() => {
+        // vibrate if supported
+        if (navigator.vibrate) navigator.vibrate(40);
+        openContextMenu(part);
+      }, 600);
+    }, { passive: true });
+    div.addEventListener('touchend',   () => clearTimeout(pressTimer));
+    div.addEventListener('touchmove',  () => clearTimeout(pressTimer));
 
     kanban.appendChild(div);
   });
 }
 
-// ══════════════════════════════════════════════════════
-// CRUD
-// ══════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════
+//  MODAL SYSTEM
+// ════════════════════════════════════════════════════════
+function showModal(html) {
+  const overlay = document.getElementById('modal');
+  overlay.style.display = 'flex';
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `<div class="modal">${html}</div>`;
+  // Close on backdrop click
+  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+}
+
+function closeModal() {
+  const overlay = document.getElementById('modal');
+  overlay.classList.add('closing');
+  setTimeout(() => {
+    overlay.style.display = 'none';
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = '';
+  }, 200);
+}
+
+function openEditModal(id, e) {
+  if (e) e.stopPropagation();
+  const part = partsDB.find(p => p.id == id);
+  if (!part) return;
+  showModal(`
+    <button class="btn-close-modal" onclick="closeModal()">✕</button>
+    <div class="modal-title">✎ Modifier la référence</div>
+    <label class="modal-label">Part Number</label>
+    <input type="text" class="modal-input" id="modal-part-input" value="${part.part_number}"
+           onkeydown="if(event.key==='Enter') confirmEdit(${id})">
+    <div class="modal-actions">
+      <button class="btn-modal btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-modal btn-confirm" onclick="confirmEdit(${id})">Enregistrer</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('modal-part-input')?.focus(), 50);
+}
+
+async function confirmEdit(id) {
+  const val = document.getElementById('modal-part-input')?.value.trim();
+  if (!val) { toast('Part number vide', 'error'); return; }
+  const part = partsDB.find(p => p.id == id);
+  await updatePart(id, val, part.emplacement);
+  lastAction = 'Modifié ' + val;
+  closeModal();
+  await loadParts();
+  toast('Référence mise à jour', 'success');
+}
+
+function openDeleteModal(id, e) {
+  if (e) e.stopPropagation();
+  const part = partsDB.find(p => p.id == id);
+  if (!part) return;
+  showModal(`
+    <button class="btn-close-modal" onclick="closeModal()">✕</button>
+    <div class="modal-title">Supprimer la référence ?</div>
+    <p style="color:var(--off); font-size:14px; margin-bottom:20px; line-height:1.5">
+      Vous êtes sur le point de supprimer<br>
+      <strong style="color:var(--white); font-family:var(--mono)">${part.part_number}</strong>
+    </p>
+    <div class="modal-actions">
+      <button class="btn-modal btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-modal btn-danger" onclick="confirmDelete(${id})">Supprimer</button>
+    </div>
+  `);
+}
+
+async function confirmDelete(id) {
+  const part = partsDB.find(p => p.id == id);
+  await deletePart(id);
+  lastAction = 'Supprimé';
+  closeModal();
+  await loadParts();
+  toast('Référence supprimée', 'error');
+}
+
+function openContextMenu(part) {
+  showModal(`
+    <button class="btn-close-modal" onclick="closeModal()">✕</button>
+    <div class="modal-title" style="font-size:15px">${part.part_number}</div>
+    <p style="font-family:var(--mono); font-size:10px; color:var(--off); margin-bottom:24px; letter-spacing:1px">${part.emplacement}</p>
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      <button class="btn-modal btn-confirm" style="width:100%; padding:14px" onclick="closeModal(); openEditModal(${part.id})">✎ Modifier</button>
+      <button class="btn-modal btn-danger"  style="width:100%; padding:14px" onclick="closeModal(); openDeleteModal(${part.id})">✕ Supprimer</button>
+    </div>
+  `);
+}
+
+// ════════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════════
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerText = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+// ════════════════════════════════════════════════════════
+//  CRUD
+// ════════════════════════════════════════════════════════
 async function addPart() {
-  const part = document.getElementById("newPart").value.trim();
-  if (!part) { alert("Entrer un Part Number"); return; }
+  const input = document.getElementById('newPart');
+  const part  = input.value.trim();
+  if (!part) { toast('Entrer un Part Number', 'error'); return; }
   try {
-    await fetch("http://localhost:3000/addPart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ part_number: part, emplacement: "CASE_" + Date.now() })
+    await fetch('http://localhost:3000/addPart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ part_number: part, emplacement: 'CASE_' + Date.now() })
     });
-    document.getElementById("newPart").value = "";
+    input.value = '';
+    lastAction  = 'Ajouté ' + part;
     await loadParts();
-  } catch(err) { console.error(err); alert("Erreur ajout !"); }
-}
-
-async function updatePart(id, part, place) {
-  await fetch(`http://localhost:3000/updatePart/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ part_number: part, emplacement: place })
-  });
-}
-
-async function deletePart(id) {
-  await fetch(`http://localhost:3000/deletePart/${id}`, { method: "DELETE" });
-}
-
-// ══════════════════════════════════════════════════════
-// NAVIGATION
-// ══════════════════════════════════════════════════════
-function goBack() { window.history.back(); }
-function goHome() { window.location.href = "index.html"; }
-function logout() {
-  if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
-    sessionStorage.clear();
-    localStorage.removeItem("adminToken");
-    window.location.href = "admin_login.html";
+    toast(`${part} ajouté`, 'success');
+  } catch {
+    // Demo mode
+    const newId = Math.max(...partsDB.map(p => p.id), 0) + 1;
+    partsDB.push({ id: newId, part_number: part, emplacement: 'CASE_' + Date.now() });
+    input.value = '';
+    lastAction  = 'Ajouté ' + part;
+    updateStats();
+    filterParts();
+    toast(`${part} ajouté (démo)`, 'success');
   }
 }
 
+async function updatePart(id, part, place) {
+  try {
+    await fetch(`http://localhost:3000/updatePart/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ part_number: part, emplacement: place })
+    });
+  } catch {
+    const p = partsDB.find(x => x.id == id);
+    if (p) { p.part_number = part; p.emplacement = place; }
+  }
+}
+
+async function deletePart(id) {
+  try {
+    await fetch(`http://localhost:3000/deletePart/${id}`, { method: 'DELETE' });
+  } catch {
+    partsDB = partsDB.filter(p => p.id != id);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════
+function goBack()  { window.history.back(); }
+function goHome()  { window.location.href = 'index.html'; }
+function logout() {
+  showModal(`
+    <button class="btn-close-modal" onclick="closeModal()">✕</button>
+    <div class="modal-title">Se déconnecter ?</div>
+    <p style="color:var(--off); font-size:14px; margin-bottom:24px">Votre session sera terminée.</p>
+    <div class="modal-actions">
+      <button class="btn-modal btn-cancel" onclick="closeModal()">Annuler</button>
+      <button class="btn-modal btn-danger" onclick="doLogout()">Déconnexion</button>
+    </div>
+  `);
+}
+function doLogout() {
+  sessionStorage.clear();
+  localStorage.removeItem('adminToken');
+  window.location.href = 'admin_login.html';
+}
+
+// ════════════════════════════════════════════════════════
+//  KEYBOARD SHORTCUTS
+// ════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+  if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    e.preventDefault();
+    document.getElementById('searchInput').focus();
+  }
+});
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
 loadParts();
 </script>
-
 </body>
 </html>
