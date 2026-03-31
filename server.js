@@ -26,9 +26,9 @@ app.get("/", (req, res) => {
   res.send("API Kanban fonctionne !");
 });
 
-app.listen(3000, () => {
-  console.log("Serveur lancé sur port 3000");
-});
+const PORT = process.env.PORT || 3000;  // Use Render's PORT or fallback to 3000 locally
+app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+
 //AJOUTER UN PART NUMBER
 app.post("/addPart", (req, res) => {
   const { part_number, emplacement } = req.body;
